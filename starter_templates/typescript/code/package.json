@@ -1,0 +1,11 @@
+{
+  "name": "@codecrafters/tokenizer",
+  "description": "Build your own Tokenizer challenge, from CodeCrafters",
+  "type": "module",
+  "scripts": {
+    "dev": "bun run app/main.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  }
+}
