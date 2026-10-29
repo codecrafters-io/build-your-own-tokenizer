@@ -1,4 +1,5 @@
-In this stage, you'll split text the way GPT-2 does before any merge is applied.
+In this stage, you'll split text the way GPT-2 does, before any merge is
+applied.
 
 ### Chunks
 
@@ -8,7 +9,8 @@ pattern is the one in
 [`tiktoken`](https://github.com/openai/tiktoken/blob/main/tiktoken_ext/openai_public.py)
 for its GPT-2 encoding.
 
-Split with this pattern, encode each chunk with those merges, and concatenate the ids:
+With `--pretokenize gpt2`, split the text with this pattern, encode each chunk
+with the merges from `--merges`, and concatenate the ids:
 
 ```text
 '(?:[sdmt]|ll|ve|re)| ?\p{L}++| ?\p{N}++| ?[^\s\p{L}\p{N}]++|\s++$|\s+(?!\S)|\s
@@ -17,11 +19,12 @@ Split with this pattern, encode each chunk with those merges, and concatenate th
 The optional space before letters, numbers, and punctuation is the character
 U+0020 only. Contractions are case sensitive, so `don't` splits into `don` and
 `'t`, while `DON'T` splits into `DON`, `'`, and `T`. Marks such as Devanagari
-vowel signs are their own chunks, because they are not letters. A non-breaking
-space stays apart from the words around it.
+vowel signs are not letters, so a run of them is its own chunk: `हिंदी` splits
+into `ह`, `िं`, `द`, and `ी`. A non-breaking space stays apart from the words
+around it.
 
-The text `Hello world's 123!!` splits into `Hello`, ` world`, `'s`, ` 123`, and
-`!!`. With merges `[[108, 108], [111, 32]]`, the ids are:
+For example, the text `Hello world's 123!!` splits into `Hello`, ` world`, `'s`,
+` 123`, and `!!`. With merges `[[108, 108], [111, 32]]`, the ids are:
 
 ```json
 [
@@ -57,6 +60,45 @@ The tester will also run your program on a few other files, including `DON'T`,
 
 ### Notes
 
-- The apostrophe in the example is U+0027.
-- Go, Rust, and C++ standard libraries cannot express this pattern. A
-  left-to-right scan that tries the alternatives in order is enough.
+{{#lang_is_typescript}}
+
+- TypeScript regexes don't support possessive quantifiers. Replace each `++`
+  with `+`, which gives the same chunks here, and use the `g` and `u` flags.
+  Without `u`, `\p{L}` matches the literal text `p{L}`.
+
+{{/lang_is_typescript}}
+
+{{#lang_is_python}}
+
+- Python's built-in `re` doesn't support `\p{L}`. Use the
+  [`regex`](https://pypi.org/project/regex/) package (`uv add regex`) instead.
+
+{{/lang_is_python}}
+
+{{#lang_is_java}}
+
+- Compile the pattern with `Pattern.UNICODE_CHARACTER_CLASS`. Otherwise `\s`
+  doesn't match a non-breaking space.
+
+{{/lang_is_java}}
+
+{{#lang_is_go}}
+
+- Go's standard library cannot express this pattern. A left-to-right scan that
+  tries the alternatives in order is enough.
+
+{{/lang_is_go}}
+
+{{#lang_is_rust}}
+
+- Rust's standard library cannot express this pattern. A left-to-right scan that
+  tries the alternatives in order is enough.
+
+{{/lang_is_rust}}
+
+{{#lang_is_cpp}}
+
+- C++'s standard library cannot express this pattern. A left-to-right scan that
+  tries the alternatives in order is enough.
+
+{{/lang_is_cpp}}
