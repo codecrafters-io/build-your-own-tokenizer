@@ -1,9 +1,12 @@
-#include <cstdint>
 #include <fstream>
 #include <iostream>
 #include <iterator>
 #include <string>
 #include <vector>
+
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
 
 int main(int argc, char *argv[]) {
     std::cout << std::unitbuf;
@@ -23,14 +26,7 @@ int main(int argc, char *argv[]) {
     // if (command == "bytes") {
     //     std::ifstream file(argv[2], std::ios::binary);
     //     std::vector<unsigned char> data((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-    //     std::cout << "[";
-    //     for (size_t i = 0; i < data.size(); i++) {
-    //         if (i > 0) {
-    //             std::cout << ", ";
-    //         }
-    //         std::cout << static_cast<int>(data[i]);
-    //     }
-    //     std::cout << "]\n";
+    //     std::cout << json(data).dump() << "\n";
     // } else {
     //     std::cerr << "Unknown command " << command << "\n";
     //     return EXIT_FAILURE;

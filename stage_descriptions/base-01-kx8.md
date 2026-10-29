@@ -39,4 +39,5 @@ The tester will also run your program on a few other files, including an empty f
 ### Notes
 
 - Spaces, newlines, and tabs are bytes too. Keep every one of them: a space is `32`, a newline is `10`, and a tab is `9`.
+- The tester reads your output as JSON, so `[104,105]` and `[104, 105]` both pass.
 

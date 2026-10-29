@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"os"
+
+	"encoding/json"
 )
 
 // Usage: your_program.sh <command> <arg1> <arg2> ...
@@ -19,14 +21,12 @@ func main() {
 			fmt.Fprintf(os.Stderr, "Error reading file: %s\n", err)
 			os.Exit(1)
 		}
-		fmt.Print("[")
+		ids := make([]int, len(data))
 		for i, b := range data {
-			if i > 0 {
-				fmt.Print(", ")
-			}
-			fmt.Print(b)
+			ids[i] = int(b)
 		}
-		fmt.Println("]")
+		output, _ := json.Marshal(ids)
+		fmt.Println(string(output))
 
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown command %s\n", command)

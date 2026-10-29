@@ -1,4 +1,5 @@
-@@ -1,20 +1,15 @@
+@@ -1,21 +1,16 @@
+ import json
  import sys
 
 
@@ -12,14 +13,14 @@
 -    # if command == "bytes":
 -    #     with open(sys.argv[2], "rb") as f:
 -    #         data = f.read()
--    #     print("[" + ", ".join(str(byte) for byte in data) + "]")
+-    #     print(json.dumps(list(data)))
 -    # else:
 -    #     raise RuntimeError(f"Unknown command {command}")
 +    command = sys.argv[1]
 +    if command == "bytes":
 +        with open(sys.argv[2], "rb") as f:
 +            data = f.read()
-+        print("[" + ", ".join(str(byte) for byte in data) + "]")
++        print(json.dumps(list(data)))
 +    else:
 +        raise RuntimeError(f"Unknown command {command}")
 

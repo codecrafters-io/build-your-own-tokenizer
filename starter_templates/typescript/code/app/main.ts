@@ -10,7 +10,7 @@ switch (command) {
   case "bytes":
     // TODO: Uncomment the code below to pass the first stage
     // const data = fs.readFileSync(args[1]);
-    // console.log("[" + Array.from(data).join(", ") + "]");
+    // console.log(JSON.stringify(Array.from(data)));
     break;
   default:
     throw new Error(`Unknown command ${command}`);

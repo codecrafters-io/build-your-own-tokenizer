@@ -10,13 +10,8 @@ fn main() {
     // TODO: Uncomment the code below to pass the first stage
     // let args: Vec<String> = env::args().collect();
     // if args[1] == "bytes" {
-    //     let data = fs::read(&args[2]).unwrap();
-    //     let text = data
-    //         .iter()
-    //         .map(|byte| byte.to_string())
-    //         .collect::<Vec<_>>()
-    //         .join(", ");
-    //     println!("[{text}]");
+    //     let data: Vec<u8> = fs::read(&args[2]).unwrap();
+    //     println!("{}", serde_json::to_string(&data).unwrap());
     // } else {
     //     eprintln!("unknown command: {}", args[1]);
     // }
