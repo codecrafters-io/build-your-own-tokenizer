@@ -1,12 +1,12 @@
-In this stage, you'll implement the `bytes` command.
+In this stage, you'll implement the first step of a tokenizer, a `bytes` command that converts text into UTF-8 bytes.
 
 ### The `bytes` command
 
 A language model can't read text. It only reads numbers, called token IDs. A tokenizer turns the text into token IDs for the model, before the model can start acting on it. 
 
-Raw bytes are already numbers, but they make really long lists. A tokenizer groups common pieces of text, like `the` or `ing`, into one token ID each. A shorter list of tokens lets the model read more text at once.
+The first step of a tokenizer is to convert raw text into bytes, before it can do further processing. 
 
-The first step of a tokenizer is to convert text into [UTF-8](https://www.rfc-editor.org/rfc/rfc3629) bytes. The `bytes` command prints those bytes, one number each.
+The `bytes` command reads a file and prints its [UTF-8](https://www.rfc-editor.org/rfc/rfc3629) bytes, one number each.
 
 ```bash
 $ ./your_program.sh bytes text.txt
@@ -22,17 +22,21 @@ For a file that contains `hi 👋`, the output is:
 
 ### Tests
 
-The tester will write a UTF-8 file and execute your program like this:
+The tester will write `hi 👋` to `text.txt` and execute your program like this:
 
 ```bash
 $ ./your_program.sh bytes text.txt
 ```
 
-Your program must print the bytes as a JSON array, like this:
+Your program must print the bytes as a JSON array:
 
 ```json
 [104, 105, 32, 240, 159, 145, 139]
 ```
 
-The tester will also check a file containing `🙂`, which prints `[240, 159, 153, 130]`, and an empty file, which prints `[]`.
+The tester will also run your program on a few other files, including an empty file, a file with only an emoji, and a file with several lines.
+
+### Notes
+
+- Spaces, newlines, and tabs are bytes too. Keep every one of them: a space is `32`, a newline is `10`, and a tab is `9`.
 
