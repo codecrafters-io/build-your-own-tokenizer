@@ -3,12 +3,24 @@ appears.
 
 ### Encoding
 
-In earlier stages, you learned merges by recounting which pair was most common.
-Encoding does not recount. Read `merges.json`, a JSON array of pairs in the
-order they were learned. Pair number `i` created token `256 + i`. While two or
-more ids remain, merge the pair with the earliest rank that is still present.
+In earlier stages, you trained a tokenizer. It counted pairs and merged the most
+common one, over and over, and the result was a list of merges. Encoding uses
+that list to turn new text into token ids. It's what a tokenizer does every time
+it's used, like when you send a message to a language model.
 
-The three merges from `aaabdaaabac` encode the text `aaab` as:
+Encoding doesn't count pairs again. It reuses the merges from training, so the
+same text always gets the same ids.
+
+Read `merges.json`, a JSON array of pairs in the order they were learned. A
+pair's position in the list is its rank, and the pair at index `i`, counting
+from 0, created id `256 + i`. Then:
+
+1. Start with the text's UTF-8 bytes.
+2. Find the pair with the earliest rank that is still present, and merge every
+   occurrence of it, like the `merge` command does.
+3. Repeat step 2 until no pair of neighboring ids is in `merges.json`.
+
+For example, the three merges from `aaabdaaabac` encode the text `aaab` as:
 
 ```json
 [258]
@@ -47,3 +59,4 @@ training text, the `ababa` example above, and an empty file.
 
 - Always apply the earliest learned merge that is still present.
 - Applying a later merge first can produce ids a model never saw in training.
+- Here `--merges` is the path to a merges file. In `train`, it was a count.
