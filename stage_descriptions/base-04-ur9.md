@@ -16,8 +16,9 @@ adds one merge to the list.
 3. Replace that pair with the next new id. The first merge creates 256, the
    second creates 257, and so on.
 4. Repeat steps 2 and 3 on the new list until you have done `--merges` merges.
+   Keep going even when the most frequent pair appears only once.
 
-Here's `aaabdaaabac` with `--merges 3`:
+For example, here's `aaabdaaabac` with `--merges 3`:
 
 | Round | Ids                                             | Most frequent pair                          | New id |
 | ----- | ----------------------------------------------- | ------------------------------------------- | ------ |
@@ -61,3 +62,4 @@ spaces and newlines.
 
 - Print only the pairs, in the order you merged them. A pair's position gives
   its id, so the list needs no ids.
+- The tester never asks for more merges than the text allows.
