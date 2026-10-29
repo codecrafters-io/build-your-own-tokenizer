@@ -7,7 +7,7 @@ short_name: "Tokenizer"
 release_status: "alpha"
 
 description_md: |-
-  A tokenizer turns text into the integers a language model reads. In this challenge, you'll build a byte-pair encoding tokenizer that's capable of training a vocabulary, encoding text, and decoding token IDs.
+  A tokenizer turns text into the integers a language model understands. In this challenge, you'll build a byte-pair encoding tokenizer that's capable of training a vocabulary, encoding text, and decoding token IDs.
 
   Along the way, you'll learn about byte-level BPE, pretokenization, and GPT-2's encoding.
 
@@ -37,15 +37,15 @@ marketing:
   frequently_asked_questions:
     - question_markdown: "What exactly will I build?"
       answer_markdown: |-
-        You'll build a byte-pair encoding tokenizer. By the end of the base stages it can train a vocabulary, encode text to token IDs, and decode those IDs back to text, including text that matches GPT-2.
+        You'll build a byte-pair encoding tokenizer. By the end of the base stages, it can train a vocabulary, encode text into token IDs, and decode those IDs back into text.
 
-        Your program will already agree with GPT-2 on real text, so the same IDs can be fed to a language model.
+        In the last stage, your program loads GPT-2's vocabulary files and produces the same token IDs as GPT-2, so GPT-2 itself could read them.
 
         Later extensions add:
         * Reserved tokens such as `<|endoftext|>`
         * Token counts across languages
         * A faster encoder
-        * A vocabulary trained on Hindi
+        * A vocabulary trained on a different language like Hindi or Spanish
 
         At the end, you'll have a GitHub repo to show off.
     - question_markdown: "What exactly will I learn?"
