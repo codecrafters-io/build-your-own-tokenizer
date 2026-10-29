@@ -22,26 +22,21 @@ The text `Hello world's 123!!` splits into `Hello`, ` world`, `'s`, ` 123`, and 
 
 ### Tests
 
-The tester runs:
+The tester will write `Hello world's 123!!` to `text.txt` and `[[108, 108], [111, 32]]` to `merges.json`, then execute your program like this:
 
 ```bash
 $ ./your_program.sh encode text.txt --merges merges.json --pretokenize gpt2
 ```
 
-For `Hello world's 123!!` and merges `[[108, 108], [111, 32]]`, `stdout` is:
+Your program must print the token ids as a JSON array:
 
 ```json
 [72, 101, 256, 111, 32, 119, 111, 114, 108, 100, 39, 115, 32, 49, 50, 51, 33, 33]
 ```
 
-The tester checks that:
-
-- the visible text prints the ids above
-- `ll` inside `Hello` becomes 256, and `o` followed by a space does not merge
-- hidden text includes `DON'T`, `हिंदी`, and a non-breaking space
+The tester will also run your program on a few other files, including `DON'T`, `हिंदी`, and a non-breaking space.
 
 ### Notes
 
 - The apostrophe in the example is U+0027.
-- Hidden text includes `DON'T`, `हिंदी`, and a non-breaking space.
 - Go, Rust, and C++ standard libraries cannot express this pattern. A left-to-right scan that tries the alternatives in order is enough.

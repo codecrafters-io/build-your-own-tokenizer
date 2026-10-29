@@ -1,10 +1,12 @@
-In this stage, you'll find the adjacent pair of token ids that shows up most often.
+In this stage, you'll implement the `top-pair` command to find the most frequent pair of token ids.
 
-### The winning pair
+### The `top-pair` command
 
-In earlier stages, you turned text into byte ids. This is highly inefficient as a simple `hi 👋` string required 8 bytes `[104, 105, 32, 240, 159, 145, 139]`. In this stage, we will identify the most frequented pair, so that we can assign them a new token ID and reduce the number of tokens required. 
+In earlier stages, you turned text into byte ids. Byte ids make long lists. `hi 👋` has 4 characters, but it takes 7 bytes.
 
-As part of this stage, count every pair of neighboring token ids to identify the most frequently occuring pair. Overlapping positions each count, so in `aaa` the pair `(97, 97)` occurs twice. When two pairs have the same count, the one that appears earliest in a left-to-right scan wins.
+A tokenizer shortens the list by giving a common pair of ids its own new id. The first step is to find the most frequent pair.
+
+The `top-pair` command counts every pair of neighboring ids and prints the one that appears most often. Overlapping pairs count, so `aaa` has the pair `(97, 97)` twice. When two pairs tie, the pair that appears first, reading left to right, wins.
 
 The ids of `aaabdaaabac` are `[97, 97, 97, 98, 100, 97, 97, 97, 98, 97, 99]`. The most frequent pair is:
 
@@ -12,7 +14,9 @@ The ids of `aaabdaaabac` are `[97, 97, 97, 98, 100, 97, 97, 97, 98, 97, 99]`. Th
 [97, 97]
 ```
 
-That pair appears 4 times. The tie input `[8, 9, 1, 2]` has two pairs that each occur once, and the earliest one is:
+That pair appears 4 times.
+
+In `[8, 9, 1, 2]`, the pairs `(8, 9)`, `(9, 1)`, and `(1, 2)` each appear once. They all tie, so the first pair from the left wins:
 
 ```json
 [8, 9]
@@ -20,24 +24,20 @@ That pair appears 4 times. The tie input `[8, 9, 1, 2]` has two pairs that each 
 
 ### Tests
 
-The tester runs:
+The tester will write the ids of `aaabdaaabac` to `ids.json` as a JSON array and execute your program like this:
 
 ```bash
 $ ./your_program.sh top-pair ids.json
 ```
 
-For the bytes of `aaabdaaabac`, `stdout` is:
+Your program must print the pair as a JSON array:
 
 ```json
 [97, 97]
 ```
 
-The tester checks that:
-
-- `aaabdaaabac` reports `[97, 97]`
-- `[8, 9, 1, 2]` reports `[8, 9]`, the earliest pair on a tie
-- overlapping positions in `aaa` each count
+The tester will also run your program on a few other lists, including ties, overlapping pairs, and a list with only one pair.
 
 ### Notes
 
-- This stage only reports the winning pair. Later stages repeat the same tie-break after every merge.
+- Print only the winning pair. Later stages give that pair its own new id.

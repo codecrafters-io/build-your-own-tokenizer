@@ -110,17 +110,17 @@ stages:
     name: "Most frequent pair"
     difficulty: easy
     marketing_md: |-
-      In this stage, you'll find the adjacent pair of token ids that shows up most often.
+      In this stage, you'll implement the `top-pair` command to find the most frequent pair of token ids.
   - slug: "fk3"
     name: "Apply a merge"
     difficulty: easy
     marketing_md: |-
-      In this stage, you'll replace one pair with a new token id, scanning from left to right.
+      In this stage, you'll implement the `merge` command to replace a pair of ids with a new id.
   - slug: "ur9"
     name: "Train BPE"
     difficulty: medium
     marketing_md: |-
-      In this stage, you'll repeat that replacement and learn an ordered list of merges from a corpus.
+      In this stage, you'll implement the `train` command to merge the most frequent pair, over and over.
   - slug: "kz6"
     name: "Encode"
     difficulty: medium

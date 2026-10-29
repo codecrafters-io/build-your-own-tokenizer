@@ -1,39 +1,40 @@
-In this stage, you'll replace one pair with a new token id, scanning from left to right.
+In this stage, you'll implement the `merge` command to replace a pair of ids with a new id.
 
-### One merge
+### The `merge` command
 
-In earlier stages, you found the pair that shows up most often. A merge walks the ids from left to right and replaces each match with a new id. Once two ids are merged, they are not available for an overlapping match.
+A merge gives a pair of ids its own new id. Byte ids go from 0 to 255, so the new id in this stage is always 256. Later stages combine this with the most frequent pair from earlier stages to train a tokenizer.
 
-The ids `[97, 97, 97]`, merged on `97,97` into `256`, become:
+The `merge` command reads the ids from left to right. Each time it finds the pair, it replaces those two ids with the new id.
+
+`hihi` is `[104, 105, 104, 105]`. Replacing the pair `(104, 105)` with `256` gives:
+
+```json
+[256, 256]
+```
+
+Each id can be part of only one match. In `[97, 97, 97]`, the first two ids become `256`, and the last `97` has no partner left. Replacing the pair `(97, 97)` with `256` gives:
 
 ```json
 [256, 97]
 ```
-Since a UTF-8 bytes contain values from 0-255, we are generating new IDs starting from 256. 
-
-The first two values become the new id and the last one stays. `[97, 97, 97, 97]` becomes `[256, 256]`. 
 
 ### Tests
 
-The tester runs:
+The tester will write the ids of `aaabdaaabac` to `ids.json` as a JSON array and execute your program like this:
 
 ```bash
-$ ./your_program.sh merge ids.json --pair 97,97 --new 256
+$ ./your_program.sh merge ids.json --pair 97,97
 ```
 
-For the bytes of `aaabdaaabac`, `stdout` is:
+Your program must print the merged ids as a JSON array:
 
 ```json
 [256, 97, 98, 100, 256, 97, 98, 97, 99]
 ```
 
-The tester checks that:
-
-- `aaabdaaabac` becomes `[256, 97, 98, 100, 256, 97, 98, 97, 99]`
-- `[97, 97, 97]` becomes `[256, 97]`, and `[97, 97, 97, 97]` becomes `[256, 256]`
-- a missing pair leaves the list unchanged
+The tester will also run your program on a few other lists, including overlapping matches and a pair that never appears.
 
 ### Notes
 
 - `--pair` is two integers separated by a comma, with no spaces.
-- The new id is whatever `--new` says. Later stages assign these ids from the merge order.
+- Later stages create more ids, counting up from 256.

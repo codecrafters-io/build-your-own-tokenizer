@@ -20,23 +20,19 @@ Rank is not frequency. The text `ababa` with merges `[[98, 97], [97, 98]]` still
 
 ### Tests
 
-The tester runs:
+The tester will write `aaab` to `text.txt` and `[[97, 97], [256, 97], [257, 98]]` to `merges.json`, then execute your program like this:
 
 ```bash
 $ ./your_program.sh encode text.txt --merges merges.json
 ```
 
-With the three merges learned from `aaabdaaabac`, the text `aaab` prints:
+Your program must print the token ids as a JSON array:
 
 ```json
 [258]
 ```
 
-The tester checks that:
-
-- `aaab` prints `[258]`, and the training text prints `[258, 100, 258, 97, 99]`
-- `ababa` with merges `[[98, 97], [97, 98]]` prints `[97, 256, 256]`
-- an empty file prints `[]`
+The tester will also run your program on a few other files, including the training text, the `ababa` example above, and an empty file.
 
 ### Notes
 

@@ -22,29 +22,19 @@ The text ` Hello world`, with a leading space, encodes as:
 
 ### Tests
 
-The tester runs:
+The tester will write `Hello world` to `text.txt`, put GPT-2's `vocab.json` and `merges.txt` in a `gpt2` directory, and execute your program like this:
 
 ```bash
-$ ./your_program.sh encode text.txt --vocab gpt2/
+$ ./your_program.sh encode text.txt --vocab gpt2
 ```
 
-`gpt2/` contains `vocab.json` and `merges.txt`. For `Hello world`, `stdout` is:
+Your program must print the token ids as a JSON array:
 
 ```json
 [15496, 995]
 ```
 
-` Hello world`, with a leading space, is:
-
-```json
-[18435, 995]
-```
-
-The tester checks that:
-
-- `Hello world` prints `[15496, 995]`
-- ` Hello world` prints `[18435, 995]`
-- fifty hidden texts, including Hindi, Tamil, code, emoji, and whitespace, match GPT-2
+The tester will also run your program on a few other files, including ` Hello world` with a leading space, a Hindi sentence, and a short program with indented lines.
 
 ### Notes
 

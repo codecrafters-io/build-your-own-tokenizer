@@ -18,25 +18,23 @@ In earlier stages, you encoded text into token ids. Build the same vocabulary tr
 
 `[240, 159, 145, 139]` prints the wave emoji.
 
+A byte that can never appear in UTF-8, like 255, is its own replacement character. `[255, 255]` prints `"\uFFFD\uFFFD"`.
+
 ### Tests
 
-The tester runs:
+The tester will write `[258, 100]` to `ids.json` and `[[97, 97], [256, 97], [257, 98]]` to `merges.json`, then execute your program like this:
 
 ```bash
 $ ./your_program.sh decode ids.json --merges merges.json
 ```
 
-`[258, 100]` with the three merges from `aaabdaaabac` prints:
+Your program must print the text as a JSON string:
 
 ```json
 "aaabd"
 ```
 
-The tester checks that:
-
-- `[258, 100]` prints `"aaabd"`
-- `[240, 159]` prints one replacement character, `"\uFFFD"`
-- `[240, 159, 145, 139]` prints the wave emoji
+The tester will also run your program on a few other lists, including the full wave emoji, half of the wave emoji, and bytes that are never valid UTF-8.
 
 ### Notes
 
