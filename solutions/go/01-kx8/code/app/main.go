@@ -1,10 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
-
-	"encoding/json"
 )
 
 // Usage: your_program.sh <command> <arg1> <arg2> ...

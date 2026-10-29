@@ -1,11 +1,10 @@
 package main
 
 import (
-	"fmt"
-	"os"
-
 	// TODO: Uncomment the code below to pass the first stage!
 	// "encoding/json"
+	"fmt"
+	"os"
 )
 
 // Usage: your_program.sh <command> <arg1> <arg2> ...
