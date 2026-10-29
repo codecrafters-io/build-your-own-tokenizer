@@ -7,6 +7,11 @@ not store raw bytes. Each byte is renamed to a printable character, and the
 token id comes from
 [`vocab.json`](https://huggingface.co/gpt2/resolve/main/vocab.json).
 
+`vocab.json` is a JSON object that maps each token to its id, like
+`{"!": 0, "Hello": 15496, "Ġworld": 995}`. Parse it with your language's JSON
+library. Its keys use JSON escapes such as `"\u0120"` for `Ġ`, and the library
+turns them back into characters.
+
 [`merges.txt`](https://huggingface.co/gpt2/resolve/main/merges.txt) lists pairs
 in rank order, after a `#version` line. Printable bytes map to themselves. The
 other 68 bytes, in increasing order, map to U+0100 and upward. A space is byte

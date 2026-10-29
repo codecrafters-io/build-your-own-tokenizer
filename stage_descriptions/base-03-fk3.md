@@ -7,8 +7,9 @@ A merge gives a pair of ids its own new id. Byte ids go from 0 to 255, so the
 new id in this stage is always 256. Later stages combine this with the most
 frequent pair from earlier stages to train a tokenizer.
 
-The `merge` command reads the ids from left to right. Each time it finds the
-pair, it replaces those two ids with the new id.
+Like `top-pair`, the `merge` command parses `ids.json` as a JSON array of
+integers. It reads the ids from left to right. Each time it finds the pair, it
+replaces those two ids with the new id.
 
 In `[1, 2, 3, 1, 2]`, the pair `(1, 2)` appears twice. Replacing it with `256`
 gives:

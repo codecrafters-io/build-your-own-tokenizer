@@ -14,6 +14,8 @@ that appears most often. Overlapping pairs count, so `aaa` has the pair
 `(97, 97)` twice. When two pairs tie, the pair that appears first, reading left
 to right, wins.
 
+Your program reads ids from `ids.json` and parses it as JSON. The IDs are already integers, so there is no UTF-8 step for this stage. 
+
 In `[1, 2, 3, 1, 2]`, the pairs are `(1, 2)`, `(2, 3)`, `(3, 1)`, and `(1, 2)`
 again. The pair `(1, 2)` appears twice, so the most frequent pair is:
 
@@ -48,5 +50,4 @@ overlapping pairs, and the ids of `aaabdaaabac`.
 
 ### Notes
 
-- Parse `ids.json` as JSON. Its contents are a list of numbers.
 - Print only the winning pair. Later stages give that pair its own new id.

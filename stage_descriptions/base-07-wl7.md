@@ -8,8 +8,7 @@ pattern is the one in
 [`tiktoken`](https://github.com/openai/tiktoken/blob/main/tiktoken_ext/openai_public.py)
 for its GPT-2 encoding.
 
-Split with this pattern, encode each chunk with the merges file, and concatenate
-the ids:
+Split with this pattern, encode each chunk with those merges, and concatenate the ids:
 
 ```text
 '(?:[sdmt]|ll|ve|re)| ?\p{L}++| ?\p{N}++| ?[^\s\p{L}\p{N}]++|\s++$|\s+(?!\S)|\s

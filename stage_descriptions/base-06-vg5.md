@@ -3,11 +3,14 @@ not valid UTF-8.
 
 ### Decoding
 
-In earlier stages, you encoded text into token ids. Build the same vocabulary
-training would. Id `n` below 256 is the single byte `n`. Id `256 + i` is the
-concatenation of the two ids in merge `i`. Join every token's bytes into one
-buffer, then decode that buffer as UTF-8. Where the bytes are not valid, use the
-replacement character U+FFFD.
+In earlier stages, you encoded text into token ids. The `decode` command parses
+two JSON files in the formats from earlier stages: `ids.json` is an array of
+ids, and `merges.json` is an array of pairs.
+
+Build the same vocabulary training would. Id `n` below 256 is the single byte
+`n`. Id `256 + i` is the concatenation of the two ids in merge `i`. Join every
+token's bytes into one buffer, then decode that buffer as UTF-8. Where the bytes
+are not valid, use the replacement character U+FFFD.
 
 `[258, 100]` with the three merges from `aaabdaaabac` prints:
 
@@ -50,5 +53,6 @@ wave emoji, half of the wave emoji, and bytes that are never valid UTF-8.
 
 - Join every token's bytes before decoding. The half-emoji is one replacement
   character.
-- `stdout` is a JSON string, so the replacement character stays exact.
+- Print the text with your JSON library, so quotes, newlines, and the
+  replacement character are escaped correctly.
 - The program should keep running when the bytes are not valid UTF-8.
