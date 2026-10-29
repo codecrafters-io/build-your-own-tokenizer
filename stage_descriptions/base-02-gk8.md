@@ -8,13 +8,11 @@ A tokenizer shortens the list by giving a common pair of ids its own new id. The
 
 The `top-pair` command counts every pair of neighboring ids and prints the one that appears most often. Overlapping pairs count, so `aaa` has the pair `(97, 97)` twice. When two pairs tie, the pair that appears first, reading left to right, wins.
 
-The ids of `aaabdaaabac` are `[97, 97, 97, 98, 100, 97, 97, 97, 98, 97, 99]`. The most frequent pair is:
+In `[1, 2, 3, 1, 2]`, the pairs are `(1, 2)`, `(2, 3)`, `(3, 1)`, and `(1, 2)` again. The pair `(1, 2)` appears twice, so the most frequent pair is:
 
 ```json
-[97, 97]
+[1, 2]
 ```
-
-That pair appears 4 times.
 
 In `[8, 9, 1, 2]`, the pairs `(8, 9)`, `(9, 1)`, and `(1, 2)` each appear once. They all tie, so the first pair from the left wins:
 
@@ -24,7 +22,7 @@ In `[8, 9, 1, 2]`, the pairs `(8, 9)`, `(9, 1)`, and `(1, 2)` each appear once. 
 
 ### Tests
 
-The tester will write the ids of `aaabdaaabac` to `ids.json` as a JSON array and execute your program like this:
+The tester will write `[1, 2, 3, 1, 2]` to `ids.json` and execute your program like this:
 
 ```bash
 $ ./your_program.sh top-pair ids.json
@@ -33,11 +31,12 @@ $ ./your_program.sh top-pair ids.json
 Your program must print the pair as a JSON array:
 
 ```json
-[97, 97]
+[1, 2]
 ```
 
-The tester will also run your program on a few other lists, including ties, overlapping pairs, and a list with only one pair.
+The tester will also run your program on a few other lists, including ties, overlapping pairs, and the ids of `aaabdaaabac`.
 
 ### Notes
 
+- Parse `ids.json` as JSON. Its contents are a list of numbers.
 - Print only the winning pair. Later stages give that pair its own new id.

@@ -6,10 +6,10 @@ A merge gives a pair of ids its own new id. Byte ids go from 0 to 255, so the ne
 
 The `merge` command reads the ids from left to right. Each time it finds the pair, it replaces those two ids with the new id.
 
-`hihi` is `[104, 105, 104, 105]`. Replacing the pair `(104, 105)` with `256` gives:
+In `[1, 2, 3, 1, 2]`, the pair `(1, 2)` appears twice. Replacing it with `256` gives:
 
 ```json
-[256, 256]
+[256, 3, 256]
 ```
 
 Each id can be part of only one match. In `[97, 97, 97]`, the first two ids become `256`, and the last `97` has no partner left. Replacing the pair `(97, 97)` with `256` gives:
@@ -20,19 +20,19 @@ Each id can be part of only one match. In `[97, 97, 97]`, the first two ids beco
 
 ### Tests
 
-The tester will write the ids of `aaabdaaabac` to `ids.json` as a JSON array and execute your program like this:
+The tester will write `[1, 2, 3, 1, 2]` to `ids.json` and execute your program like this:
 
 ```bash
-$ ./your_program.sh merge ids.json --pair 97,97
+$ ./your_program.sh merge ids.json --pair 1,2
 ```
 
 Your program must print the merged ids as a JSON array:
 
 ```json
-[256, 97, 98, 100, 256, 97, 98, 97, 99]
+[256, 3, 256]
 ```
 
-The tester will also run your program on a few other lists, including overlapping matches and a pair that never appears.
+The tester will also run your program on a few other lists, including overlapping matches, a pair that never appears, and the ids of `aaabdaaabac`.
 
 ### Notes
 
