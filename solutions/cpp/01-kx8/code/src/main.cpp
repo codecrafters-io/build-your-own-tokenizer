@@ -1,0 +1,35 @@
+#include <cstdint>
+#include <fstream>
+#include <iostream>
+#include <iterator>
+#include <string>
+#include <vector>
+
+int main(int argc, char *argv[]) {
+    std::cout << std::unitbuf;
+    std::cerr << std::unitbuf;
+
+    if (argc < 2) {
+        std::cerr << "No command provided.\n";
+        return EXIT_FAILURE;
+    }
+
+    std::string command = argv[1];
+    if (command == "bytes") {
+        std::ifstream file(argv[2], std::ios::binary);
+        std::vector<unsigned char> data((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+        std::cout << "[";
+        for (size_t i = 0; i < data.size(); i++) {
+            if (i > 0) {
+                std::cout << ", ";
+            }
+            std::cout << static_cast<int>(data[i]);
+        }
+        std::cout << "]\n";
+    } else {
+        std::cerr << "Unknown command " << command << "\n";
+        return EXIT_FAILURE;
+    }
+
+    return EXIT_SUCCESS;
+}
