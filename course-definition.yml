@@ -19,16 +19,22 @@ completion_percentage: 5
 languages:
   - slug: "python"
     release_status: "alpha"
+    alpha_tester_usernames: ["VIDIT45AGARWAL", "aayush0325", "flcrom"]
   - slug: "rust"
     release_status: "alpha"
+    alpha_tester_usernames: ["VIDIT45AGARWAL", "aayush0325", "flcrom"]
   - slug: "go"
     release_status: "alpha"
+    alpha_tester_usernames: ["VIDIT45AGARWAL", "aayush0325", "flcrom"]
   - slug: "cpp"
     release_status: "alpha"
+    alpha_tester_usernames: ["VIDIT45AGARWAL", "aayush0325", "flcrom"]
   - slug: "typescript"
     release_status: "alpha"
+    alpha_tester_usernames: ["VIDIT45AGARWAL", "aayush0325", "flcrom"]
   - slug: "java"
     release_status: "alpha"
+    alpha_tester_usernames: ["VIDIT45AGARWAL", "aayush0325", "flcrom"]
 
 marketing:
   difficulty: medium
