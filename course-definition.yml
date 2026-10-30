@@ -7,7 +7,7 @@ short_name: "Tokenizer"
 release_status: "alpha"
 
 description_md: |-
-  Why do language models miscount the r's in "strawberry"? GPT-2 never sees the letters. Its tokenizer hands it `st`, `raw`, and `berry`. In this challenge, you'll build a tokenizer that splits text into the same tokens as GPT-2.
+  Why do language models miscount the r's in "strawberry"? GPT-2 never sees the letters. Its tokenizer hands it three pieces: `st`, `raw`, and `berry`. A tokenizer is the program that splits text into pieces like these before a model reads it. In this challenge, you'll build one that splits text exactly like GPT-2's.
 
   Along the way, you'll learn about byte-pair encoding, UTF-8, and more.
 
