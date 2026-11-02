@@ -72,9 +72,9 @@ marketing:
         You'll build the tokenizer yourself and watch these splits happen. Your finished program produces the same token IDs as GPT-2, which is one piece you need to run the model yourself.
     - question_markdown: "What are the prerequisites for this challenge?"
       answer_markdown: |-
-        You should be comfortable writing code in Python, Rust, Go, C++, TypeScript, or Java, and using Git. No machine learning background is required.
+        You should be comfortable writing code in Python, Rust, Go, C++, TypeScript, or Java, handling strings, and using Git. No machine learning background is required.
 
-        Most learners pick up the Unicode details as they go.
+        The stages teach byte-pair encoding and UTF-8 from the start, so a vague idea of either is enough. Most learners pick up the Unicode details as they go.
 
         What matters most is curiosity and persistence. You'll develop intuition by exploring, debugging, and discovering solutions yourself.
 

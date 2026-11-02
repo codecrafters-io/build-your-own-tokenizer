@@ -34,9 +34,15 @@ GPT-2 splits with this pattern, from
 ```
 
 Split the text with this pattern, encode each chunk with the merges from
-`--merges`, and concatenate the ids. For example, the text `Hello world's 123!!`
-splits into `Hello`, ` world`, `'s`, ` 123`, and `!!`, which are exactly GPT-2's
-five tokens for it. With merges `[[108, 108], [111, 32]]`, the ids are:
+`--merges`, and concatenate the ids. A space joins the chunk that follows it.
+For example, the text `Hello world's 123!!` splits into five chunks:
+
+```text
+"Hello"  " world"  "'s"  " 123"  "!!"
+```
+
+These are exactly GPT-2's five tokens for it. With merges
+`[[108, 108], [111, 32]]`, the ids are:
 
 ```json
 [
@@ -87,8 +93,9 @@ The tester will also run your program on a few other files, including `DON'T`,
 
 {{#lang_is_python}}
 
-- Python's built-in `re` doesn't support `\p{L}`. Use the
-  [`regex`](https://pypi.org/project/regex/) package (`uv add regex`) instead.
+- Your project already includes the [`regex`](https://pypi.org/project/regex/)
+  package, which supports `\p{L}` and `++`. Use `import regex` in place of the
+  built-in `re`.
 
 {{/lang_is_python}}
 

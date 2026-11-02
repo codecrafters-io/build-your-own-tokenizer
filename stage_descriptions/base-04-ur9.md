@@ -63,6 +63,9 @@ The command prints the merged pairs in order:
 ]
 ```
 
+The tester parses your output as JSON, so spacing and line breaks are up to you.
+`[[97,97],[256,97],[257,98]]` on one line passes too.
+
 ### Tests
 
 The tester will write `aaabdaaabac` to `corpus.txt` and execute your program
