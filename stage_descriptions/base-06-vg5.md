@@ -1,8 +1,10 @@
 In this stage, you'll implement the `decode` command to turn token ids back into
 text.
 
+### Your progress
+
 <details>
-  <summary>Your progress: back to the original text for the example sentence `to the top of the tree`</summary>
+  <summary>Back to the original text for the example sentence `to the top of the tree`</summary>
 
 Here's how many tokens the sentence `to the top of the tree` takes so far:
 

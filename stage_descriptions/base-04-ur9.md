@@ -1,8 +1,10 @@
 In this stage, you'll implement the `train` command to learn which pairs to
 merge from a text file.
 
+### Your progress
+
 <details>
-  <summary>Your progress: 22 → 11 tokens for the example sentence `to the top of the tree`</summary>
+  <summary>22 → 11 tokens for the example sentence `to the top of the tree`</summary>
 
 Here's how many tokens the sentence `to the top of the tree` takes so far:
 
@@ -62,6 +64,9 @@ The command prints the merged pairs in order:
   [257, 98]
 ]
 ```
+
+The tester parses your output as JSON, so spacing and line breaks are up to you.
+`[[97,97],[256,97],[257,98]]` on one line passes too.
 
 ### Tests
 

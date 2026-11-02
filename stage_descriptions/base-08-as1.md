@@ -1,8 +1,10 @@
 In this stage, you'll implement the `--vocab` option to produce GPT-2's exact
 token ids from its vocabulary files.
 
+### Your progress
+
 <details>
-  <summary>Your progress: 6 tokens for the example sentence `to the top of the tree`</summary>
+  <summary>6 tokens for the example sentence `to the top of the tree`</summary>
 
 Here's how many tokens the sentence `to the top of the tree` takes so far:
 

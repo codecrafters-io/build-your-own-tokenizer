@@ -1,8 +1,10 @@
 In this stage, you'll implement the `encode` command to turn new text into token
 ids with a list of learned merges.
 
+### Your progress
+
 <details>
-  <summary>Your progress: 11 tokens for the example sentence `to the top of the tree`</summary>
+  <summary>11 tokens for the example sentence `to the top of the tree`</summary>
 
 Here's how many tokens the sentence `to the top of the tree` takes so far:
 

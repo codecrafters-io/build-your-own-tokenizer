@@ -1,8 +1,10 @@
 In this stage, you'll implement the `merge` command to combine a pair of tokens
 into a new token.
 
+### Your progress
+
 <details>
-  <summary>Your progress: 22 → 18 tokens for the example sentence `to the top of the tree`</summary>
+  <summary>22 → 18 tokens for the example sentence `to the top of the tree`</summary>
 
 Here's how many tokens the sentence `to the top of the tree` takes so far:
 
