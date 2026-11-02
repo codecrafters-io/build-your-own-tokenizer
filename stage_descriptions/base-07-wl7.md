@@ -1,8 +1,10 @@
 In this stage, you'll implement the `--pretokenize gpt2` option to split text
 into chunks before merging, the way GPT-2 does.
 
+### Your progress
+
 <details>
-  <summary>Your progress: 11 → 13 tokens for the example sentence `to the top of the tree`</summary>
+  <summary>11 → 13 tokens for the example sentence `to the top of the tree`</summary>
 
 Here's how many tokens the sentence `to the top of the tree` takes so far:
 
