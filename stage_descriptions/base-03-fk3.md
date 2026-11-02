@@ -16,14 +16,26 @@ GPT-2     ██████                   6 tokens   ← the goal
 
 ### Why merge?
 
-Merging is how GPT-2 grew its vocabulary. In English language, the most common pattern is a space followed by `t` because of many `the`, `to` and `that` in sentences. During tokenization, GPT-2 merged the pair `(32, 116)`, representing a space followed by `t`, and gave it a new id, 256. Every ` the`,
-` to`, and ` that` in a text got one token shorter.
+Merging is how GPT-2 grew its vocabulary. In GPT-2's training text, the most
+common pair of bytes was a space (byte 32) followed by `t` (byte 116), the start
+of words like `the`, `to`, and `that`. GPT-2 merged that pair first and gave it
+the new id 256.
+
+After that merge, every `the`, `to`, and `that` with a space before it takes one
+token fewer. A word at the very start of a text has no space before it, so its
+`t` stays a separate token. In `to the top of the tree`, 4 of the 5 words that
+start with `t` follow a space, so the sentence drops from 22 tokens to 18.
+
+32 and 116 are byte values. GPT-2's vocabulary numbers single bytes in its own
+order, so its ids for a space and `t` are 220 and 83. Later stages convert
+between the two.
 
 ### The `merge` command
 
 A merge gives a pair of ids its own new id. Byte ids go from 0 to 255, so the
-new id in this stage is always 256. Later stages combine this with `top-pair` to
-train a tokenizer.
+first free id is 256. This stage makes one merge, so its new id is always 256.
+Later stages combine this with `top-pair` to train a tokenizer, and give each
+new merge the next id: 257, 258, and so on.
 
 Like `top-pair`, the `merge` command parses `ids.json` as a JSON array of
 integers. It reads the ids from left to right. Each time it finds the pair given
@@ -70,4 +82,3 @@ overlapping matches, a pair that never appears, and the ids of `aaabdaaabac`.
 - `--pair` is two integers separated by a comma, with no spaces.
 - Order matters. `--pair 1,2` matches `1` followed by `2`, never `2` followed by
   `1`.
-- Later stages create more ids, counting up from 256.
