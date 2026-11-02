@@ -3,9 +3,9 @@ tokens a tokenizer should combine next.
 
 ### Why combine pairs?
 
-GPT-2 sees `Hello world` as 2 tokens, `Hello` and ` world`. Your `bytes` command
-sees it as 11 bytes. A tokenizer gets from 11 down to 2 by repeatedly combining
-the most common pair of tokens into a new token.
+GPT-2 sees `Hello world` as 2 tokens: `Hello`, and `world` with the space before
+it. Your `bytes` command sees it as 11 bytes. A tokenizer gets from 11 down to 2
+by repeatedly combining the most common pair of tokens into a new token.
 
 This stage finds the most common pair. Later stages combine it and repeat.
 
