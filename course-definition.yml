@@ -19,22 +19,22 @@ completion_percentage: 5
 languages:
   - slug: "python"
     release_status: "alpha"
-    alpha_tester_usernames: ["VIDIT45AGARWAL", "aayush0325", "flcrom"]
+    alpha_tester_usernames: ["VIDIT45AGARWAL", "aayush0325", "flcrom", "shirshaksengupta"]
   - slug: "rust"
     release_status: "alpha"
-    alpha_tester_usernames: ["VIDIT45AGARWAL", "aayush0325", "flcrom"]
+    alpha_tester_usernames: ["VIDIT45AGARWAL", "aayush0325", "flcrom", "shirshaksengupta"]
   - slug: "go"
     release_status: "alpha"
-    alpha_tester_usernames: ["VIDIT45AGARWAL", "aayush0325", "flcrom"]
+    alpha_tester_usernames: ["VIDIT45AGARWAL", "aayush0325", "flcrom", "shirshaksengupta"]
   - slug: "cpp"
     release_status: "alpha"
-    alpha_tester_usernames: ["VIDIT45AGARWAL", "aayush0325", "flcrom"]
+    alpha_tester_usernames: ["VIDIT45AGARWAL", "aayush0325", "flcrom", "shirshaksengupta"]
   - slug: "typescript"
     release_status: "alpha"
-    alpha_tester_usernames: ["VIDIT45AGARWAL", "aayush0325", "flcrom"]
+    alpha_tester_usernames: ["VIDIT45AGARWAL", "aayush0325", "flcrom", "shirshaksengupta"]
   - slug: "java"
     release_status: "alpha"
-    alpha_tester_usernames: ["VIDIT45AGARWAL", "aayush0325", "flcrom"]
+    alpha_tester_usernames: ["VIDIT45AGARWAL", "aayush0325", "flcrom", "shirshaksengupta"]
 
 marketing:
   difficulty: medium
