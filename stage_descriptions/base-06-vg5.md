@@ -22,11 +22,12 @@ GPT-2     ██████                   6 tokens   ← the goal
 A language model writes its answer as token ids. Decode turns those ids back
 into text.
 
-👋 is four UTF-8 bytes. GPT-2 splits them across two tokens, `[41840, 233]`.
-The first token holds the first three bytes. The second holds the last byte.
-UTF-8 needs all four bytes to make 👋, so decoding the first token by itself
-gives the replacement character `�`. Join the bytes from both tokens first, and
-the result is 👋.
+👋 is four UTF-8 bytes, `[240, 159, 145, 139]`. GPT-2 splits them across two
+tokens, `[41840, 233]`. Token boundaries don't have to line up with character
+boundaries: the first token holds `[240, 159, 145]` and the second holds
+`[139]`. UTF-8 needs all four bytes to make 👋, so decoding the first token by
+itself gives the replacement character `�`. Join the bytes from both tokens
+first, and the result is 👋.
 
 Your decoder does the same with any text. Complete characters come back as
 themselves. Bytes that stop halfway through a character come back as `�`.
@@ -52,17 +53,51 @@ For example, `[258, 100]` with the three merges from `aaabdaaabac` prints:
 `258` expands to `257` and `98`, then to `256`, `97`, and `98`, and finally to
 the bytes of `aaab`. `100` is `d`.
 
-`[240, 159]` is only the first half of the wave emoji. Joined, those two bytes
-are one replacement character:
-
-```json
-"\uFFFD"
-```
-
 `[240, 159, 145, 139]` prints the wave emoji.
 
-A byte that can never appear in UTF-8, like 255, is its own replacement
-character. `[255, 255]` prints `"\uFFFD\uFFFD"`.
+### How many replacement characters?
+
+U+FFFD, shown as `�`, is a replacement _character_, not a replacement byte. One
+`�` can stand for several bytes. Read the buffer left to right, one character at
+a time:
+
+- The first byte says how long the character is. 0–127 is a 1-byte character,
+  194–223 starts a 2-byte one, 224–239 a 3-byte one, and 240–244 a 4-byte one.
+- Every byte after the first must be a continuation byte, 128–191.
+- If the character is complete, output it. If a byte doesn't fit, or the buffer
+  ends first, output one `�` for the bytes read so far and start the next
+  character at the byte that didn't fit.
+- A byte that can't start a character, like 255 or a stray continuation byte,
+  is one `�` by itself.
+
+| Bytes        | Prints           | Why                                                                                                                                 |
+| ------------ | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `[240, 159]` | `"\uFFFD"`       | 240 starts a 4-byte character and 159 continues it. The buffer ends first, so both bytes are one `�`.                               |
+| `[255, 255]` | `"\uFFFD\uFFFD"` | 255 never starts a character, so each 255 is its own `�`.                                                                           |
+| `[240, 240]` | `"\uFFFD\uFFFD"` | The second 240 doesn't continue the first, so the first 240 is one `�`. The buffer ends after the second 240, so it is another `�`. |
+
+<details>
+  <summary>The exact rule</summary>
+
+The tests in this stage only use cut-off characters and bytes that never appear
+in UTF-8, so the rule above is enough. UTF-8 also limits the second byte after
+four lead bytes, which rules out overlong encodings, surrogates, and values
+above U+10FFFF:
+
+| First byte | Length | Second byte |
+| ---------- | ------ | ----------- |
+| 224        | 3      | 160–191     |
+| 237        | 3      | 128–159     |
+| 240        | 4      | 144–191     |
+| 244        | 4      | 128–143     |
+
+A second byte outside its range doesn't fit, just like any other byte that
+doesn't continue a character. This is the Unicode Standard's
+[maximal subpart rule](https://www.unicode.org/versions/Unicode16.0.0/core-spec/chapter-3/#G66453).
+The built-in decoders in Python, Rust, and TypeScript follow it exactly. Java's
+differs only on surrogates, which these tests don't use.
+
+</details>
 
 ### Tests
 
@@ -114,15 +149,21 @@ wave emoji, half of the wave emoji, and bytes that are never valid UTF-8.
 
 {{#lang_is_go}}
 
-- Write the decoding loop yourself. Ranging over a string gives one U+FFFD per
-  invalid byte, and `strings.ToValidUTF8` gives one per run of invalid bytes.
+- Write the decoding loop yourself, following the rule in "How many replacement
+  characters?". Ranging over a string gives one U+FFFD per invalid byte, and
+  [`strings.ToValidUTF8`](https://pkg.go.dev/strings#ToValidUTF8) gives one per
+  run of invalid bytes, so neither matches. Once a character's bytes are
+  complete, [`utf8.DecodeRune`](https://pkg.go.dev/unicode/utf8#DecodeRune)
+  decodes them.
 
 {{/lang_is_go}}
 
 {{#lang_is_cpp}}
 
-- Write the decoding loop yourself. The C++ standard library has no UTF-8
-  decoder that replaces invalid bytes.
+- Write the decoding loop yourself, following the rule in "How many replacement
+  characters?". The C++ standard library has no UTF-8 decoder that replaces
+  invalid bytes. Valid characters can be copied to the output as their bytes,
+  and each `�` is the 3 bytes 239, 191, 189.
 
 {{/lang_is_cpp}}
 
