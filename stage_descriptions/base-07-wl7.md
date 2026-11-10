@@ -119,21 +119,29 @@ The tester will also run your program on a few other files, including `DON'T`,
 
 {{#lang_is_go}}
 
-- Go's standard library cannot express this pattern. A left-to-right scan that
-  tries the alternatives in order is enough.
+- Go's `regexp` package has no lookahead, so your project already includes
+  [`regexp2/v2`](https://pkg.go.dev/github.com/dlclark/regexp2/v2), which runs
+  the pattern unchanged. Compile it with `regexp2.None` and step through the
+  chunks with `FindStringMatch` and `FindNextMatch`. With `regexp2.RE2`, `\s`
+  doesn't match a non-breaking space.
 
 {{/lang_is_go}}
 
 {{#lang_is_rust}}
 
-- Rust's standard library cannot express this pattern. A left-to-right scan that
-  tries the alternatives in order is enough.
+- The `regex` crate has no lookahead, so your project already includes
+  [`fancy-regex`](https://docs.rs/fancy-regex/0.20.1/fancy_regex/), which runs
+  the pattern unchanged. `Regex::new` compiles it, and `find_iter` gives the
+  chunks.
 
 {{/lang_is_rust}}
 
 {{#lang_is_cpp}}
 
-- C++'s standard library cannot express this pattern. A left-to-right scan that
-  tries the alternatives in order is enough.
+- `std::regex` has no `\p{L}`, so your project already includes
+  [PCRE2](https://pcre2project.github.io/pcre2/doc/pcre2api/), which runs the
+  pattern unchanged. Compile it with `PCRE2_UTF | PCRE2_UCP`, then call
+  `pcre2_match` in a loop, starting each search where the last chunk ended.
+  Without `PCRE2_UCP`, `\s` doesn't match a non-breaking space.
 
 {{/lang_is_cpp}}
