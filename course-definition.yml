@@ -52,7 +52,7 @@ marketing:
         * Token counts across languages
         * A faster encoder
         * A vocabulary trained on a different language like Hindi or Spanish
-        * GPT-4's tokenizer, where you work out its merges from token ranks and split numbers into groups of up to 3 digits, so ` 1999` becomes ` `, `199`, and `9`
+        * GPT-4's tokenizer, where you work out its merges from token ranks and split numbers into groups of up to 3 digits, so the space before `1999` becomes a token of its own, followed by `199` and `9`
 
         At the end, you'll have a GitHub repo to show off.
     - question_markdown: "What exactly will I learn?"
@@ -67,7 +67,7 @@ marketing:
         As your code gets complex, you'll be forced to structure and refactor it, to avoid regressions and to make adding new features easier.
     - question_markdown: "Why should I build such a project?"
       answer_markdown: |-
-        Some of the strangest things language models do start in the tokenizer. GPT-2 sees `strawberry` as `st`, `raw`, and `berry`, so the letters it is asked to count are hidden inside tokens. In ` 1999 + 2026`, it sees ` 1999` as one token and `2026` as `20` and `26`.
+        Some of the strangest things language models do start in the tokenizer. GPT-2 sees `strawberry` as `st`, `raw`, and `berry`, so the letters it is asked to count are hidden inside tokens. In `1999 + 2026`, it sees `1999` as one token and `2026` as `20` and `26`.
 
         You'll build the tokenizer yourself and watch these splits happen. Your finished program produces the same token IDs as GPT-2, which is one piece you need to run the model yourself.
     - question_markdown: "What are the prerequisites for this challenge?"

@@ -23,8 +23,9 @@ The
 [GPT-2 paper](https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf)
 found plain BPE spending merges on `dog.`, `dog!`, and `dog?`, one token for
 each variation. GPT-2 fixes this by splitting text into chunks first and keeping
-every merge inside a chunk. It encodes `dog. dog! dog?` as `dog`, `.`, ` dog`,
-`!`, ` dog`, and `?`, so ` dog` is one token, used twice.
+every merge inside a chunk. It encodes `dog. dog! dog?` as `dog`, `.`, `␠dog`,
+`!`, `␠dog`, and `?`, where `␠` marks a space. `␠dog` is one token, used
+twice.
 
 ### Splitting with GPT-2's pattern
 

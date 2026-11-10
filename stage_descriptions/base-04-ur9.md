@@ -24,15 +24,16 @@ training text. Its first six merges were:
 
 | New id | Pair         | Token |
 | ------ | ------------ | ----- |
-| 256    | `(32, 116)`  | ` t`  |
-| 257    | `(32, 97)`   | ` a`  |
+| 256    | `(32, 116)`  | `␠t`  |
+| 257    | `(32, 97)`   | `␠a`  |
 | 258    | `(104, 101)` | `he`  |
 | 259    | `(105, 110)` | `in`  |
 | 260    | `(114, 101)` | `re`  |
 | 261    | `(111, 110)` | `on`  |
 
-Later merges build on earlier ones. Merge 262 combines ` t` and `he` into
-` the`. This loop is called byte-pair encoding, or BPE.
+`␠` marks a space, byte 32. Later merges build on earlier ones. Merge 262
+combines `␠t` and `he` into `␠the`. This loop is called byte-pair encoding, or
+BPE.
 
 ### The `train` command
 
