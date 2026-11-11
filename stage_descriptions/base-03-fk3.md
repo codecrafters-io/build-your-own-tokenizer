@@ -77,7 +77,8 @@ Your program must print the merged ids as a JSON array:
 ```
 
 The tester will also run your program on a few other lists, including
-overlapping matches, a pair that never appears, and the ids of `aaabdaaabac`.
+overlapping matches, a pair that never appears, the ids of `aaabdaaabac`, and
+the bytes of the sentence from "Your progress".
 
 ### Notes
 

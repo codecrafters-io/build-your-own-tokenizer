@@ -15,6 +15,9 @@ split     █████████████           13 tokens   ← this
 GPT-2     ██████                   6 tokens   ← the goal
 ```
 
+The 13 comes from the same five merges. One of them joins `␠the` to the `␠t`
+of the next word, which are now in different chunks, so it no longer applies.
+
 </details>
 
 ### Why split first?
@@ -38,6 +41,9 @@ GPT-2 splits with this pattern, from
 ```text
 '(?:[sdmt]|ll|ve|re)| ?\p{L}++| ?\p{N}++| ?[^\s\p{L}\p{N}]++|\s++$|\s+(?!\S)|\s
 ```
+
+The pattern starts with an apostrophe. Its first branch matches the
+contractions `'s`, `'d`, `'m`, `'t`, `'ll`, `'ve`, and `'re`.
 
 Split the text with this pattern, encode each chunk with the merges from
 `--merges`, and concatenate the ids. A space joins the chunk that follows it.
@@ -91,7 +97,7 @@ Your program must print the token ids as a JSON array:
 ```
 
 The tester will also run your program on a few other files, including `DON'T`,
-`हिंदी`, and a non-breaking space.
+`हिंदी`, a non-breaking space, and the sentence from "Your progress".
 
 ### Notes
 

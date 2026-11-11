@@ -15,6 +15,8 @@ decode    ██████████████████████  22
 GPT-2     ██████                   6 tokens   ← the goal
 ```
 
+Decoding those 11 ids with the same five merges gives the sentence back.
+
 </details>
 
 ### Why decode?
@@ -79,8 +81,8 @@ a time:
 <details>
   <summary>The exact rule</summary>
 
-The tests in this stage only use cut-off characters and bytes that never appear
-in UTF-8, so the rule above is enough. UTF-8 also limits the second byte after
+For invalid input, the tests in this stage only use cut-off characters and
+bytes that never appear in UTF-8, so the rule above is enough. UTF-8 also limits the second byte after
 four lead bytes, which rules out overlong encodings, surrogates, and values
 above U+10FFFF:
 
@@ -116,7 +118,8 @@ Your program must print the text as a JSON string:
 ```
 
 The tester will also run your program on a few other lists, including the full
-wave emoji, half of the wave emoji, and bytes that are never valid UTF-8.
+wave emoji, half of the wave emoji, bytes that are never valid UTF-8, and the
+ids of the sentence from "Your progress".
 
 ### Notes
 

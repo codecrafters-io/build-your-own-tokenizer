@@ -14,6 +14,8 @@ encode    ███████████             11 tokens   ← this sta
 GPT-2     ██████                   6 tokens   ← the goal
 ```
 
+The 11 comes from encoding the sentence with the five merges learned from it.
+
 </details>
 
 ### Why encode?
@@ -86,7 +88,8 @@ Your program must print the token ids as a JSON array:
 ```
 
 The tester will also run your program on a few other files, including the
-training text, the `ababa` example above, and an empty file.
+training text, the `ababa` example above, an empty file, and the sentence from
+"Your progress".
 
 ### Notes
 

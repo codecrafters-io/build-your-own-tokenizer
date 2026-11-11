@@ -14,6 +14,9 @@ split     █████████████           13 tokens
 GPT-2     ██████                   6 tokens   ← this stage
 ```
 
+The sentence splits into 6 chunks, and GPT-2's vocabulary has one token for
+each of them.
+
 </details>
 
 ### Matching GPT-2
@@ -108,8 +111,8 @@ id, like `"Hello" " world"`. When one fails, it shows the expected pieces next
 to yours.
 
 The tester will also run your program on a few other files, including
-` Hello world` with a leading space, a Hindi sentence, and a short program with
-indented lines.
+` Hello world` with a leading space, a Hindi sentence, a short program with
+indented lines, and the sentence from "Your progress".
 
 ### Notes
 
