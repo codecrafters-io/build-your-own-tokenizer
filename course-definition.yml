@@ -38,8 +38,8 @@ languages:
 
 marketing:
   difficulty: medium
-  sample_extension_idea_title: "Special tokens"
-  sample_extension_idea_description: "A tokenizer that can keep reserved tokens whole."
+  sample_extension_idea_title: "GPT-4's tokenizer"
+  sample_extension_idea_description: "A tokenizer that can produce the same token IDs as GPT-4."
   frequently_asked_questions:
     - question_markdown: "What exactly will I build?"
       answer_markdown: |-
