@@ -23,7 +23,7 @@ A language model writes its answer as token ids. Decode turns those ids back
 into text.
 
 👋 is four UTF-8 bytes, `[240, 159, 145, 139]`. GPT-2 splits them across two
-tokens, `[41840, 233]`. Token boundaries don't have to line up with character
+tokens, `[41840, 233]`, ids from its own vocabulary. Token boundaries don't have to line up with character
 boundaries: the first token holds `[240, 159, 145]` and the second holds
 `[139]`. UTF-8 needs all four bytes to make 👋, so decoding the first token by
 itself gives the replacement character `�`. Join the bytes from both tokens
