@@ -15,11 +15,8 @@ split     █████████████           13 tokens   ← this
 GPT-2     ██████                   6 tokens   ← the goal
 ```
 
-With the same five merges, splitting first gives 13 tokens, 2 more than
-before. The fourth merge joins `␠the` to the `␠t` that starts the next word.
-Those are in different chunks now, so the merge no longer applies in `the top`
-or `the tree`. No token crosses a chunk, which is what GPT-2's vocabulary
-expects.
+The 13 comes from the same five merges. One of them joins `␠the` to the `␠t`
+of the next word, which are now in different chunks, so it no longer applies.
 
 </details>
 
@@ -97,7 +94,7 @@ Your program must print the token ids as a JSON array:
 ```
 
 The tester will also run your program on a few other files, including `DON'T`,
-`हिंदी`, and a non-breaking space.
+`हिंदी`, a non-breaking space, and the sentence from "Your progress".
 
 ### Notes
 

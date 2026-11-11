@@ -111,8 +111,8 @@ id, like `"Hello" " world"`. When one fails, it shows the expected pieces next
 to yours.
 
 The tester will also run your program on a few other files, including
-` Hello world` with a leading space, a Hindi sentence, and a short program with
-indented lines.
+` Hello world` with a leading space, a Hindi sentence, a short program with
+indented lines, and the sentence from "Your progress".
 
 ### Notes
 

@@ -92,7 +92,7 @@ Your program must print the merged pairs as a JSON array:
 ```
 
 The tester will also ask for 6, 10, and 50 merges, including on a corpus with
-spaces and newlines.
+spaces and newlines, and for 5 merges on the sentence from "Your progress".
 
 ### Notes
 

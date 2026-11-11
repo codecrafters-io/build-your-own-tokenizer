@@ -88,7 +88,8 @@ Your program must print the token ids as a JSON array:
 ```
 
 The tester will also run your program on a few other files, including the
-training text, the `ababa` example above, and an empty file.
+training text, the `ababa` example above, an empty file, and the sentence from
+"Your progress".
 
 ### Notes
 

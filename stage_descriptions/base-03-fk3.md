@@ -14,9 +14,6 @@ merge     ██████████████████      18 tokens 
 GPT-2     ██████                   6 tokens   ← the goal
 ```
 
-The tester runs this sentence as one of its cases in every stage, so your
-program can reproduce each number.
-
 </details>
 
 ### Why merge?
@@ -80,7 +77,8 @@ Your program must print the merged ids as a JSON array:
 ```
 
 The tester will also run your program on a few other lists, including
-overlapping matches, a pair that never appears, and the ids of `aaabdaaabac`.
+overlapping matches, a pair that never appears, the ids of `aaabdaaabac`, and
+the bytes of the sentence from "Your progress".
 
 ### Notes
 
