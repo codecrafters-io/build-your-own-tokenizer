@@ -14,6 +14,8 @@ encode    ███████████             11 tokens   ← this sta
 GPT-2     ██████                   6 tokens   ← the goal
 ```
 
+The 11 comes from encoding the sentence with the five merges learned from it.
+
 </details>
 
 ### Why encode?

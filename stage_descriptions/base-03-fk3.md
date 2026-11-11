@@ -14,6 +14,9 @@ merge     ██████████████████      18 tokens 
 GPT-2     ██████                   6 tokens   ← the goal
 ```
 
+The tester runs this sentence as one of its cases in every stage, so your
+program can reproduce each number.
+
 </details>
 
 ### Why merge?

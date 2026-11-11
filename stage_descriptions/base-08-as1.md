@@ -14,6 +14,9 @@ split     █████████████           13 tokens
 GPT-2     ██████                   6 tokens   ← this stage
 ```
 
+The sentence splits into 6 chunks, and GPT-2's vocabulary has one token for
+each of them.
+
 </details>
 
 ### Matching GPT-2

@@ -14,6 +14,9 @@ train     ███████████             11 tokens   ← this sta
 GPT-2     ██████                   6 tokens   ← the goal
 ```
 
+The 11 comes from five merges learned from the sentence itself, with
+`--num-merges 5`. After the fifth merge, the sentence is 11 tokens long.
+
 </details>
 
 ### How GPT-2 learned its merges

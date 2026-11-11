@@ -15,6 +15,8 @@ decode    ██████████████████████  22
 GPT-2     ██████                   6 tokens   ← the goal
 ```
 
+Decoding those 11 ids with the same five merges gives the sentence back.
+
 </details>
 
 ### Why decode?

@@ -15,6 +15,12 @@ split     █████████████           13 tokens   ← this
 GPT-2     ██████                   6 tokens   ← the goal
 ```
 
+With the same five merges, splitting first gives 13 tokens, 2 more than
+before. The fourth merge joins `␠the` to the `␠t` that starts the next word.
+Those are in different chunks now, so the merge no longer applies in `the top`
+or `the tree`. No token crosses a chunk, which is what GPT-2's vocabulary
+expects.
+
 </details>
 
 ### Why split first?
