@@ -22,10 +22,13 @@ GPT-2     ██████                   6 tokens   ← the goal
 The
 [GPT-2 paper](https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf)
 found plain BPE spending merges on `dog.`, `dog!`, and `dog?`, one token for
-each variation. GPT-2 fixes this by splitting text into chunks first and keeping
-every merge inside a chunk. It encodes `dog. dog! dog?` as `dog`, `.`, `␠dog`,
-`!`, `␠dog`, and `?`, where `␠` marks a space. `␠dog` is one token, used
-twice.
+each variation. So GPT-2's merges were learned on text that was split into
+chunks first, and no merge ever joined two chunks.
+
+An encoder has to split the same way. Otherwise it merges across boundaries
+that training never crossed, and produces tokens GPT-2 never saw in those
+places. GPT-2 encodes `dog. dog! dog?` as `dog`, `.`, `␠dog`, `!`, `␠dog`, and
+`?`, where `␠` marks a space. `␠dog` is one token, used twice.
 
 ### Splitting with GPT-2's pattern
 

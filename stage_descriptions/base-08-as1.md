@@ -93,6 +93,10 @@ Your program must print the token ids as a JSON array:
 [15496, 995]
 ```
 
+When a short text passes, the tester's log shows the piece of text behind each
+id, like `"Hello" " world"`. When one fails, it shows the expected pieces next
+to yours.
+
 The tester will also run your program on a few other files, including
 ` Hello world` with a leading space, a Hindi sentence, and a short program with
 indented lines.
