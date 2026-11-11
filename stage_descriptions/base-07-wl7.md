@@ -42,6 +42,9 @@ GPT-2 splits with this pattern, from
 '(?:[sdmt]|ll|ve|re)| ?\p{L}++| ?\p{N}++| ?[^\s\p{L}\p{N}]++|\s++$|\s+(?!\S)|\s
 ```
 
+The pattern starts with an apostrophe. Its first branch matches the
+contractions `'s`, `'d`, `'m`, `'t`, `'ll`, `'ve`, and `'re`.
+
 Split the text with this pattern, encode each chunk with the merges from
 `--merges`, and concatenate the ids. A space joins the chunk that follows it.
 For example, the text `Hello world's 123!!` splits into five chunks:
