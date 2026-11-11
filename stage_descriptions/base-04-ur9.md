@@ -38,17 +38,17 @@ BPE.
 ### The `train` command
 
 The `train` command reads text from a file and runs the loop as many times as
-`--merges` asks:
+`--num-merges` asks:
 
 1. Convert the text into UTF-8 bytes.
 2. Find the most frequent pair. On a tie, the pair that appears first, reading
    left to right, wins.
 3. Replace that pair with the next new id. The first merge creates 256, the
    second creates 257, and so on.
-4. Repeat steps 2 and 3 on the new list until you have done `--merges` merges.
-   Keep going even when the most frequent pair appears only once.
+4. Repeat steps 2 and 3 on the new list until you have done `--num-merges`
+   merges. Keep going even when the most frequent pair appears only once.
 
-For example, here's `aaabdaaabac` with `--merges 3`:
+For example, here's `aaabdaaabac` with `--num-merges 3`:
 
 | Round | Ids                                             | Most frequent pair                          | New id |
 | ----- | ----------------------------------------------- | ------------------------------------------- | ------ |
@@ -75,7 +75,7 @@ The tester will write `aaabdaaabac` to `corpus.txt` and execute your program
 like this:
 
 ```bash
-$ ./your_program.sh train corpus.txt --merges 3
+$ ./your_program.sh train corpus.txt --num-merges 3
 ```
 
 Your program must print the merged pairs as a JSON array:

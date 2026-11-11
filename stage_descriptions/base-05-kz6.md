@@ -92,4 +92,3 @@ training text, the `ababa` example above, and an empty file.
 
 - Always apply the earliest learned merge that is still present.
 - Applying a later merge first can produce ids a model never saw in training.
-- Here `--merges` is the path to a merges file. In `train`, it was a count.
