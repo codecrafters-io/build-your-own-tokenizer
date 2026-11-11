@@ -1,0 +1,49 @@
+import json
+import sys
+
+
+def top_pair(ids):
+    counts = {}
+    for pair in zip(ids, ids[1:]):
+        counts[pair] = counts.get(pair, 0) + 1
+    # A dict keeps its keys in the order they were added, and max() returns
+    # the first key with the highest count. So a tie goes to the pair that
+    # appears first.
+    return max(counts, key=counts.get)
+
+
+def merge(ids, pair, new_id):
+    merged = []
+    i = 0
+    while i < len(ids):
+        if i + 1 < len(ids) and (ids[i], ids[i + 1]) == pair:
+            merged.append(new_id)
+            i += 2
+        else:
+            merged.append(ids[i])
+            i += 1
+    return merged
+
+
+def main():
+    command = sys.argv[1]
+    if command == "bytes":
+        with open(sys.argv[2], "rb") as f:
+            data = f.read()
+        print(json.dumps(list(data)))
+    elif command == "top-pair":
+        with open(sys.argv[2]) as f:
+            ids = json.load(f)
+        print(json.dumps(top_pair(ids)))
+    elif command == "merge":
+        with open(sys.argv[2]) as f:
+            ids = json.load(f)
+        # sys.argv[3] is "--pair", and sys.argv[4] looks like "1,2".
+        left, right = sys.argv[4].split(",")
+        print(json.dumps(merge(ids, (int(left), int(right)), 256)))
+    else:
+        raise RuntimeError(f"Unknown command {command}")
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,31 @@
+hints:
+  - title_markdown: "How do I read the pair from `--pair`?"
+    body_markdown: |-
+      The tester runs `merge ids.json --pair 1,2`, so the pair is the fifth item of `sys.argv`. Split it on the comma and turn both halves into integers:
+
+      ```python
+      left, right = sys.argv[4].split(",")
+      pair = (int(left), int(right))
+      ```
+
+  - title_markdown: "How do I replace the pair without overlapping matches?"
+    body_markdown: |-
+      Walk through the ids with an index. When the next two ids are the pair, add the new id and skip both. Otherwise, add the current id and move one step:
+
+      ```python
+      merged = []
+      i = 0
+      while i < len(ids):
+          if i + 1 < len(ids) and (ids[i], ids[i + 1]) == pair:
+              merged.append(256)
+              i += 2
+          else:
+              merged.append(ids[i])
+              i += 1
+      ```
+
+      Skipping two ids after a match is what stops `[97, 97, 97]` from matching twice.
+
+  - title_markdown: "Why not replace the pair as text?"
+    body_markdown: |-
+      Replacing `"1,2"` in the text of `ids.json` also matches inside `11,2` and `1,25`. Compare the ids as numbers, one position at a time.
