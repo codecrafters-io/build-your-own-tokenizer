@@ -1,0 +1,31 @@
+@@ -1,16 +1,30 @@
+ import json
+ import sys
+
+
++def top_pair(ids):
++    counts = {}
++    for pair in zip(ids, ids[1:]):
++        counts[pair] = counts.get(pair, 0) + 1
++    # A dict keeps its keys in the order they were added, and max() returns
++    # the first key with the highest count. So a tie goes to the pair that
++    # appears first.
++    return max(counts, key=counts.get)
++
++
+ def main():
+     command = sys.argv[1]
+     if command == "bytes":
+         with open(sys.argv[2], "rb") as f:
+             data = f.read()
+         print(json.dumps(list(data)))
++    elif command == "top-pair":
++        with open(sys.argv[2]) as f:
++            ids = json.load(f)
++        print(json.dumps(top_pair(ids)))
+     else:
+         raise RuntimeError(f"Unknown command {command}")
+
+
+ if __name__ == "__main__":
+     main()

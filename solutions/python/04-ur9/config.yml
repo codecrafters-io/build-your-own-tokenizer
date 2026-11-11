@@ -1,0 +1,30 @@
+hints:
+  - title_markdown: "How do I read the text and the number of merges?"
+    body_markdown: |-
+      The tester runs `train corpus.txt --num-merges 3`. Read the file as text, turn it into UTF-8 bytes, and read the count from `sys.argv`:
+
+      ```python
+      with open(sys.argv[2], encoding="utf-8") as f:
+          text = f.read()
+      ids = list(text.encode("utf-8"))
+      num_merges = int(sys.argv[4])
+      ```
+
+  - title_markdown: "How do I put the loop together?"
+    body_markdown: |-
+      Move the code for `top-pair` and `merge` into functions, then call them in a loop. Merge number `i`, counting from 0, creates id `256 + i`:
+
+      ```python
+      merges = []
+      for i in range(num_merges):
+          pair = top_pair(ids)
+          ids = merge(ids, pair, 256 + i)
+          merges.append(pair)
+      print(json.dumps(merges))
+      ```
+
+      Each round counts pairs in the list the previous round produced, so later pairs can contain ids above 255.
+
+  - title_markdown: "Why does my second merge differ from the expected one?"
+    body_markdown: |-
+      The usual cause is counting pairs once, before the loop. A merge changes which pairs exist, so count again at the start of every round.

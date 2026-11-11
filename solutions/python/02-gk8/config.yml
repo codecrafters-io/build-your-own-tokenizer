@@ -1,0 +1,30 @@
+hints:
+  - title_markdown: "How do I count pairs of neighbors?"
+    body_markdown: |-
+      Pair each id with the one after it using [`zip`](https://docs.python.org/3/library/functions.html#zip), and count the pairs in a dictionary:
+
+      ```python
+      counts = {}
+      for pair in zip(ids, ids[1:]):
+          counts[pair] = counts.get(pair, 0) + 1
+      ```
+
+      `zip(ids, ids[1:])` turns `[1, 2, 3, 1, 2]` into `(1, 2)`, `(2, 3)`, `(3, 1)`, and `(1, 2)`. Each pair is a tuple, so it can be a dictionary key.
+
+  - title_markdown: "How do I make the first pair win a tie?"
+    body_markdown: |-
+      A dictionary keeps its keys in the order they were added, so the pair that appears first in the ids is also first in `counts`. [`max`](https://docs.python.org/3/library/functions.html#max) returns the first key with the highest count:
+
+      ```python
+      best = max(counts, key=counts.get)
+      ```
+
+      Don't sort the pairs or use a `set`. Either one loses the order the pairs appeared in.
+
+  - title_markdown: "How do I print the pair?"
+    body_markdown: |-
+      `json.dumps` prints a tuple as a JSON array:
+
+      ```python
+      print(json.dumps(best))  # [1, 2]
+      ```
