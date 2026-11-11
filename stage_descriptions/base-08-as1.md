@@ -47,8 +47,18 @@ The first `strawberry` has no space before it and splits into `st`, `raw`, and
 The `--vocab` flag names the directory that holds `vocab.json` and `merges.txt`.
 GPT-2's files store each byte as a printable character. Bytes 33–126, 161–172,
 and 174–255 are printable, so they map to themselves. The other 68 bytes, in
-increasing order, map to U+0100 and upward. A space is byte 32, which becomes
-`Ġ` and token 220. `!` is token 0, `a` is token 64, and a newline is token 198.
+increasing order, map to U+0100 and upward. The first 33 of them are bytes 0 to
+32, so a byte `n` below 33 is stored as U+0100 + `n`.
+
+Check your table against these five bytes:
+
+| Byte    | Value | Stored as    | Id in `vocab.json` |
+| ------- | ----- | ------------ | ------------------ |
+| `!`     | 33    | `!`          | 0                  |
+| `a`     | 97    | `a`          | 64                 |
+| Tab     | 9     | `ĉ` (U+0109) | 197                |
+| Newline | 10    | `Ċ` (U+010A) | 198                |
+| Space   | 32    | `Ġ` (U+0120) | 220                |
 
 [`vocab.json`](https://huggingface.co/gpt2/resolve/main/vocab.json) is a JSON
 object that maps each token to its id, like
