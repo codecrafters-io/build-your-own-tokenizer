@@ -7,9 +7,13 @@ short_name: "Tokenizer"
 release_status: "early_access"
 
 description_md: |-
-  Why do language models miscount the r's in "strawberry"? GPT-2 never sees the letters. Its tokenizer hands it three pieces: `st`, `raw`, and `berry`. A tokenizer is the program that splits text into pieces like these before a model reads it.
+  In this challenge, you'll build a tokenizer that encodes text as integer token IDs for a language model and decodes those IDs back into text. By the end, it will produce the same IDs as GPT-2's tokenizer.
 
-  In this challenge, you'll build one with byte-pair encoding, the algorithm GPT-2 uses. Yours starts from UTF-8 bytes and learns its own tokens from a text file. By the last stage, it loads GPT-2's vocabulary and splits `strawberry` into the same three pieces.
+  Each token represents a sequence of bytes from the text, and a vocabulary assigns each token an integer ID. For example, GPT-2 encodes `strawberry` as `[301, 1831, 8396]`, whose tokens represent `st`, `raw`, and `berry`.
+
+  You'll start with the bytes of a text file, using UTF-8, an encoding that represents text as bytes. You'll then implement byte-pair encoding (BPE). During training, it repeatedly counts adjacent token pairs and merges the most frequent pair into a new token, building a vocabulary and an ordered list of merges. To encode new text, your tokenizer applies those learned merges in order and returns the resulting token IDs. To decode, it looks up each token's bytes and joins them to recover the text.
+
+  Finally, you'll use GPT-2's existing vocabulary and merge rules rather than the ones you trained. You'll reproduce how GPT-2 splits text before applying merges, so your tokenizer can match its IDs. You'll build the tokenizer, not the language model.
 
 short_description_md: |-
   Learn about byte-pair encoding, UTF-8, and more
