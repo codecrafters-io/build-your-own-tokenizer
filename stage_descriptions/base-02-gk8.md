@@ -1,22 +1,28 @@
-In this stage, you'll implement the `top-pair` command to find the pair of
-tokens a tokenizer should combine next.
+In this stage, you'll implement `top-pair` to find the most frequent pair of
+neighboring token IDs.
 
 ### Why combine pairs?
 
-GPT-2 sees `Hello world` as 2 tokens: `Hello`, and `world` with the space before
-it. Your `bytes` command sees it as 11 bytes. A tokenizer gets from 11 down to 2
-by repeatedly combining the most common pair of tokens into a new token.
+Combining two neighboring tokens into one longer token shortens the token
+sequence. If the same pair occurs in several places, that longer token can be
+reused in those places. Counting pairs helps us choose which longer token to
+add.
 
-This stage finds the most common pair. Later stages combine it and repeat.
+This stage only selects the most frequent pair. Later stages will give that pair
+a new ID and combine its occurrences.
 
 ### The `top-pair` command
 
-The `top-pair` command counts every pair of neighboring ids and prints the one
-that appears most often. Overlapping pairs count, so `aaa` has the pair
-`(97, 97)` twice. When two pairs tie, the pair that appears first, reading left
-to right, wins.
+The `top-pair` command counts every pair of neighboring IDs and prints the one
+that appears most often. Pair order matters: `(1, 2)` and `(2, 1)` are different
+pairs. Count a pair starting at every position except the last, including
+overlapping pairs. For example, `[5, 5, 5]` contains `(5, 5)` twice, because the
+middle ID belongs to both pairs.
 
-Your program reads ids from `ids.json` and parses it as JSON. The ids are
+If several pairs have the same highest count, choose the pair whose first
+occurrence is earliest in the input, reading left to right.
+
+Your program reads IDs from `ids.json` and parses it as JSON. The IDs are
 already integers, so there is no UTF-8 step for this stage.
 
 For example, in `[1, 2, 3, 1, 2]`, the pairs are `(1, 2)`, `(2, 3)`, `(3, 1)`,
@@ -56,11 +62,12 @@ Your program must print the pair as a JSON array:
 [1, 2]
 ```
 
-The tester will also run your program on a few other lists, including ties,
-overlapping pairs, and the ids of `aaabdaaabac`.
+The tester will also run your program on other lists, including ties,
+overlapping pairs, and the IDs of `aaabdaaabac`.
 
 ### Notes
 
-- Print only the winning pair. Later stages give that pair its own new id.
-- Don't assume ids fit in a byte. Later stages create ids 256 and up and count
+- Print only the winning pair as a JSON array to stdout. Send debug output to
+  stderr.
+- Don't assume IDs fit in a byte. Later stages create IDs 256 and up and count
   their pairs the same way.
