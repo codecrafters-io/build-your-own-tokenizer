@@ -9,7 +9,7 @@ resulting token has ID 256 in GPT-2's vocabulary.
 
 Applying just this merge to a byte-token list saves one token for every `the`,
 `to`, and `that` with a space before it. A word at the very start has no
-preceding space, so its `t` stays separate in this step.
+preceding space, so its `t` stays separate after this merge.
 
 32 and 116 are byte values. GPT-2's vocabulary numbers single bytes in its own
 order, so its IDs for a space and `t` are 220 and 83. Later stages convert
