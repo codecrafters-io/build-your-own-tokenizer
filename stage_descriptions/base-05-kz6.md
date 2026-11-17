@@ -1,6 +1,6 @@
-Your `train` command produces a list of merges. In this stage, add `encode` to
-apply a supplied merge list to new text and output token IDs, without learning
-new merges.
+Your `train` command produces a list of merges. In this stage, you'll add
+`encode` to apply a supplied merge list to new text and output token IDs,
+without learning new merges.
 
 ### Why encode?
 
