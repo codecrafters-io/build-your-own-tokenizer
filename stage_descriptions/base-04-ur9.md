@@ -1,5 +1,5 @@
-You can now find and merge one pair. In this stage, combine those operations in
-`train` to learn an ordered list of merges from a text file.
+You can now find and merge one pair. In this stage, you'll combine those
+operations in `train` to learn an ordered list of merges from a text file.
 
 ### Learning a vocabulary
 
@@ -19,7 +19,7 @@ with each input pair written as byte values rather than GPT-2 token IDs:
 
 `␠` marks a space, byte 32. Later merges build on earlier ones: the next rule
 combines `␠t` and `he` into `␠the`, token ID 262. Your training text determines
-your own learned pairs; you aren't trying to reproduce GPT-2's list here.
+your own learned pairs. You aren't trying to reproduce GPT-2's list here.
 
 ### The `train` command
 
