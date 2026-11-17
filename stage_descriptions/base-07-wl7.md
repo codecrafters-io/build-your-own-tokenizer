@@ -26,8 +26,10 @@ not loading its vocabulary or producing its token IDs.
 
 ### Splitting with GPT-2's pattern
 
-Use this exact pattern from
-[`tiktoken`'s GPT-2 definition](https://github.com/openai/tiktoken/blob/main/tiktoken_ext/openai_public.py):
+Use this pattern from
+[`tiktoken`'s GPT-2 definition](https://github.com/openai/tiktoken/blob/main/tiktoken_ext/openai_public.py).
+Apply the language-specific adjustments in "Notes" where needed to preserve its
+matching behavior in your regex engine:
 
 ```text
 '(?:[sdmt]|ll|ve|re)| ?\p{L}++| ?\p{N}++| ?[^\s\p{L}\p{N}]++|\s++$|\s+(?!\S)|\s
@@ -35,9 +37,10 @@ Use this exact pattern from
 
 Unicode classifies characters into categories. Here, `\p{L}` matches letters and
 `\p{N}` matches numbers across writing systems, not just ASCII letters and
-digits. `\s` matches Unicode whitespace, and `\S` matches non-whitespace.
-`[^\s\p{L}\p{N}]` matches a character outside all three groups, such as
-punctuation or an emoji.
+digits. In this pattern, `\s` denotes Unicode whitespace and `\S` its
+complement. Some regex engines use different whitespace sets, so follow the
+adjustments in "Notes" to get these same boundaries. `[^\s\p{L}\p{N}]` matches a
+character outside all three groups, such as punctuation or an emoji.
 
 At each position, the regex tries the alternatives separated by `|` from left to
 right:
