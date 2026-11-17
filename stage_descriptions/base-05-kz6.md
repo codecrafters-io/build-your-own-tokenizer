@@ -1,52 +1,69 @@
-In this stage, you'll implement the `encode` command to turn new text into token
-ids with a list of learned merges.
+In this stage, you'll implement `encode` to turn text into token IDs using a
+fixed list of learned merge rules.
 
 ### Your progress
 
 <details>
-  <summary>11 tokens for the example sentence `to the top of the tree`</summary>
+  <summary>22 → 11 tokens for the example sentence `to the top of the tree`</summary>
 
-Here's how many tokens the sentence `to the top of the tree` takes so far:
+For the exact sentence `to the top of the tree`, with no trailing newline,
+encoding with these five rules learned from the sentence itself reduces the
+sequence from 22 tokens to 11:
+
+```json
+[
+  [32, 116],
+  [256, 104],
+  [257, 101],
+  [258, 256],
+  [116, 111]
+]
+```
 
 ```text
 bytes     ██████████████████████  22 tokens
 encode    ███████████             11 tokens   ← this stage
-GPT-2     ██████                   6 tokens   ← the goal
+GPT-2     ██████                   6 tokens   ← comparison
 ```
 
-The 11 comes from encoding the sentence with the five merges learned from it.
+GPT-2's six-token result is a comparison, not the result of these five rules.
 
 </details>
 
 ### Why encode?
 
-GPT-2's tokenizer was trained once. Since then, it has encoded every prompt with
-the same 50,000 merges, replayed in the order they were learned. That is how
-`Hello world` becomes `[15496, 995]`, the same two ids every time.
-
-Your `train` command produces exactly that kind of list. In this stage, you'll
-use it.
+Training chooses pairs by frequency and learns merge rules from a corpus.
+Encoding reuses those rules to turn text into token IDs. The text can differ
+from the training corpus, but the rules stay fixed. Your `encode` command must
+not retrain on its input or choose pairs by their frequency in that input.
 
 ### The `encode` command
 
 The `encode` command reads text from `text.txt` and merges from `merges.json`, a
-JSON array of pairs in the same format `train` prints. A pair's position in the
-list is its rank, and the pair at index `i`, counting from 0, creates id
-`256 + i`.
+JSON array of pairs in the same format `train` prints. Each pair's zero-based
+position in the list is its **rank**. Lower ranks have higher priority: rank 0
+comes before rank 1. The pair at index `i` has replacement ID `256 + i`, just as
+it did during training.
 
-1. Convert the text into UTF-8 bytes.
-2. Find the pair with the earliest rank that is still present in the ids.
-3. Merge every occurrence of that pair, the same way the `merge` command does.
-4. Repeat until no pair of neighboring ids is in the list.
+1. Start with the text's UTF-8 bytes as token IDs, preserving all whitespace.
+2. Among neighboring pairs in the current IDs that appear in the rule list,
+   choose the pair with the lowest rank.
+3. Replace that pair's non-overlapping matches from left to right with its
+   replacement ID. Keep every unmatched ID unchanged and in order.
+4. Repeat on the updated sequence until no neighboring pair appears in the rule
+   list.
+
+If no rule matches, leave the IDs unchanged. An empty input produces `[]`.
+Unlike `train`, `encode` prints the final IDs, not the rules.
 
 For example, training on `aaabdaaabac` gave the merges
 `[[97, 97], [256, 97], [257, 98]]`. Here's how they encode the text `aaab`:
 
-| Round | Ids                | Pair with the earliest rank | New id |
-| ----- | ------------------ | --------------------------- | ------ |
-| 1     | `[97, 97, 97, 98]` | `(97, 97)`, rank 0          | 256    |
-| 2     | `[256, 97, 98]`    | `(256, 97)`, rank 1         | 257    |
-| 3     | `[257, 98]`        | `(257, 98)`, rank 2         | 258    |
+| Round | IDs at start       | Pair with the lowest rank | Replacement ID |
+| ----- | ------------------ | ------------------------- | -------------- |
+| 1     | `[97, 97, 97, 98]` | `(97, 97)`, rank 0        | 256            |
+| 2     | `[256, 97, 98]`    | `(256, 97)`, rank 1       | 257            |
+| 3     | `[257, 98]`        | `(257, 98)`, rank 2       | 258            |
 
 No pairs are left, so the output is:
 
@@ -56,24 +73,33 @@ No pairs are left, so the output is:
 
 The same merges encode the training text as `[258, 100, 258, 97, 99]`.
 
-Rank is not frequency. Training picked the most frequent pair, but encoding
-ignores how often a pair appears. It only looks at rank.
+### Why rank matters
 
-To see the difference, take a new text, `ababa`, and say `merges.json` is
-`[[98, 97], [97, 98]]`. The text's bytes are `[97, 98, 97, 98, 97]`, so
-`(97, 98)` and `(98, 97)` each appear twice.
+Take the text `ababa`, and say `merges.json` is `[[98, 97], [97, 98]]`. The
+text's bytes are `[97, 98, 97, 98, 97]`, so `(97, 98)` and `(98, 97)` each
+appear twice.
 
-`(98, 97)` is first in `merges.json`, so it has the earliest rank and is merged
-first. That turns the ids into `[97, 256, 256]`. Both `98`s are now used up, so
-`(97, 98)` is no longer present, and the output is:
+Although `(97, 98)` occurs first in the text, `(98, 97)` has rank 0 in the rule
+list and is merged first. That turns the IDs into `[97, 256, 256]`. Both `98`s
+are now used up, so `(97, 98)` is no longer present, and the output is:
 
 ```json
 [97, 256, 256]
 ```
 
+A merge consumes both IDs in each match, so overlapping pairs compete. If you
+applied the later rule `(97, 98)` first instead, you'd get `[257, 257, 97]`.
+Rank determines which of these token sequences to produce.
+
+Rank also takes priority over frequency. For `abababb` with rules
+`[[98, 98], [97, 98]]`, `(98, 98)` occurs once and `(97, 98)` occurs three
+times. Encoding still merges `(98, 98)` first because it has rank 0, then merges
+the remaining `(97, 98)` matches with ID 257. The result is
+`[257, 257, 97, 256]`.
+
 ### Tests
 
-The tester will write `aaab` to `text.txt` and
+The tester will write `aaab` to `text.txt`, with no trailing newline, and
 `[[97, 97], [256, 97], [257, 98]]` to `merges.json`, then execute your program
 like this:
 
@@ -81,17 +107,17 @@ like this:
 $ ./your_program.sh encode text.txt --merges merges.json
 ```
 
-Your program must print the token ids as a JSON array:
+Your program must print the token IDs as a JSON array:
 
 ```json
 [258]
 ```
 
-The tester will also run your program on a few other files, including the
-training text, the `ababa` example above, an empty file, and the sentence from
-"Your progress".
+The tester will also run your program on the training text, the `ababa` example
+above, an empty file, text with accented characters, competing pairs with
+different ranks, and the sentence from "Your progress".
 
 ### Notes
 
-- Always apply the earliest learned merge that is still present.
-- Applying a later merge first can produce ids a model never saw in training.
+- Print only the final JSON array of IDs to stdout, and send debug output to
+  stderr. The tester parses JSON, so spacing and line breaks are up to you.
