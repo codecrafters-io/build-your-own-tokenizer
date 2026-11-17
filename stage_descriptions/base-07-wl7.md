@@ -1,93 +1,152 @@
-In this stage, you'll implement the `--pretokenize gpt2` option to split text
-into chunks before merging, the way GPT-2 does.
+In this stage, you'll add `--pretokenize gpt2` to `encode` to split Unicode text
+into chunks before byte conversion and merging.
+
+### Encoding chunks independently
+
+**Pre-tokenization** divides text into chunks before BPE. These chunks set
+boundaries that merges cannot cross. A chunk isn't necessarily a final token:
+encoding it can produce several token IDs.
+
+With `--pretokenize gpt2`, your `encode` command must:
+
+1. Read `text.txt` as Unicode text and collect the pattern's matches in order,
+   using the pattern below. Each whole match is a chunk, not a delimiter to
+   discard. Joining the chunks must recover the exact input, including all
+   whitespace.
+2. Convert each chunk separately to its UTF-8 byte IDs.
+3. Encode each chunk independently using the ranked BPE procedure from earlier
+   stages and the same fixed `merges.json`. Keep the rules' ranks and IDs
+   unchanged: the pair at index `i` still creates ID `256 + i`.
+4. Concatenate the resulting ID arrays in chunk order. Do not run another merge
+   pass on the combined array.
+
+This option changes encoding only. Without it, `encode` must retain its earlier
+behavior, and `train` remains unchanged. You're adding GPT-2's chunk boundaries,
+not loading its vocabulary or producing its token IDs.
+
+### Splitting with GPT-2's pattern
+
+Use this exact pattern from
+[`tiktoken`'s GPT-2 definition](https://github.com/openai/tiktoken/blob/main/tiktoken_ext/openai_public.py):
+
+```text
+'(?:[sdmt]|ll|ve|re)| ?\p{L}++| ?\p{N}++| ?[^\s\p{L}\p{N}]++|\s++$|\s+(?!\S)|\s
+```
+
+Unicode classifies characters into categories. Here, `\p{L}` matches letters and
+`\p{N}` matches numbers across writing systems, not just ASCII letters and
+digits. `\s` matches Unicode whitespace, and `\S` matches non-whitespace.
+`[^\s\p{L}\p{N}]` matches a character outside all three groups, such as
+punctuation or an emoji.
+
+At each position, the regex tries the alternatives separated by `|` from left to
+right:
+
+- The first alternative matches the lowercase contractions `'s`, `'d`, `'m`,
+  `'t`, `'ll`, `'ve`, and `'re`.
+- ` ?\p{L}++` matches a run of letters, optionally preceded by one literal
+  space, U+0020. ` ?\p{N}++` does the same for a run of numbers.
+- ` ?[^\s\p{L}\p{N}]++` matches a run of other non-whitespace characters, also
+  with at most one leading U+0020 space.
+- `\s++$` matches a trailing whitespace run at the end of the text.
+- `\s+(?!\S)` matches a whitespace run only if another whitespace character or
+  the end of the text follows it. The `(?!\S)` is a negative lookahead: it
+  checks what follows without consuming it. Before non-whitespace, this branch
+  leaves the last whitespace character for a later match.
+- The final `\s` matches one remaining whitespace character.
+
+`+` means one or more, taking as many as possible but allowing the regex to give
+some back if the rest of that alternative fails. `++` is possessive repetition:
+it takes the whole run without giving characters back. Keep the alternatives in
+the supplied order and use case-sensitive matching.
+
+For example, `Hello world's 123!!` splits into five chunks:
+
+```json
+["Hello", " world", "'s", " 123", "!!"]
+```
+
+With merges `[[108, 108], [111, 32]]`, those five chunks produce 18 token IDs,
+shown in "Tests" below. `ll` inside `Hello` becomes 256. The `o` and the
+following space are in different chunks, so the rule `[111, 32]` cannot join
+them. They stay 111 and 32.
+
+### Whitespace, case, and combining marks
+
+Only the optional literal U+0020 space can attach to the following letter,
+number, or other non-whitespace run. A tab or a non-breaking space (U+00A0)
+cannot. The last three alternatives handle the remaining whitespace, so don't
+trim or collapse runs.
+
+These examples use JSON escapes for actual characters in the input, not literal
+backslashes:
+
+| Text                   | Chunks                               |
+| ---------------------- | ------------------------------------ |
+| `"foo  bar"`           | `["foo", " ", " bar"]`               |
+| `"foo\tbar"`           | `["foo", "\t", "bar"]`               |
+| `"foo  "`              | `["foo", "  "]`                      |
+| `"foo\u00a0bar"`       | `["foo", "\u00a0", "bar"]`           |
+| `"foo\u00a0\u00a0bar"` | `["foo", "\u00a0", "\u00a0", "bar"]` |
+
+Contractions are case sensitive. `don't` splits into `["don", "'t"]`, but
+`DON'T` splits into `["DON", "'", "T"]`. Together, `don't DON'T` splits into
+`["don", "'t", " DON", "'", "T"]`. The apostrophe here is U+0027.
+
+Some vowel signs and other marks are encoded separately from the letters they
+modify. These are **combining marks**. Unicode classifies them separately from
+letters, so `\p{L}` doesn't include them. In this pattern, they match the
+other-non-whitespace branch. For example, `हिंदी` splits into
+`["ह", "िं", "द", "ी"]`. The second chunk contains two marks, not a letter.
 
 ### Your progress
 
 <details>
   <summary>11 → 13 tokens for the example sentence `to the top of the tree`</summary>
 
-Here's how many tokens the sentence `to the top of the tree` takes so far:
-
-```text
-bytes     ██████████████████████  22 tokens
-train     ███████████             11 tokens
-split     █████████████           13 tokens   ← this stage
-GPT-2     ██████                   6 tokens   ← the goal
-```
-
-The 13 comes from the same five merges. One of them joins `␠the` to the `␠t`
-of the next word, which are now in different chunks, so it no longer applies.
-
-</details>
-
-### Why split first?
-
-The
-[GPT-2 paper](https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf)
-found plain BPE spending merges on `dog.`, `dog!`, and `dog?`, one token for
-each variation. So GPT-2's merges were learned on text that was split into
-chunks first, and no merge ever joined two chunks.
-
-An encoder has to split the same way. Otherwise it merges across boundaries
-that training never crossed, and produces tokens GPT-2 never saw in those
-places. GPT-2 encodes `dog. dog! dog?` as `dog`, `.`, `␠dog`, `!`, `␠dog`, and
-`?`, where `␠` marks a space. `␠dog` is one token, used twice.
-
-### Splitting with GPT-2's pattern
-
-GPT-2 splits with this pattern, from
-[`tiktoken`](https://github.com/openai/tiktoken/blob/main/tiktoken_ext/openai_public.py):
-
-```text
-'(?:[sdmt]|ll|ve|re)| ?\p{L}++| ?\p{N}++| ?[^\s\p{L}\p{N}]++|\s++$|\s+(?!\S)|\s
-```
-
-The pattern starts with an apostrophe. Its first branch matches the
-contractions `'s`, `'d`, `'m`, `'t`, `'ll`, `'ve`, and `'re`.
-
-Split the text with this pattern, encode each chunk with the merges from
-`--merges`, and concatenate the ids. A space joins the chunk that follows it.
-For example, the text `Hello world's 123!!` splits into five chunks:
-
-```text
-"Hello"  " world"  "'s"  " 123"  "!!"
-```
-
-These are exactly GPT-2's five tokens for it. With merges
-`[[108, 108], [111, 32]]`, the ids are:
+For the exact sentence `to the top of the tree`, with no trailing newline, keep
+the same five rules from earlier stages:
 
 ```json
 [
-  72, 101, 256, 111, 32, 119, 111, 114, 108, 100, 39, 115, 32, 49, 50, 51, 33,
-  33
+  [32, 116],
+  [256, 104],
+  [257, 101],
+  [258, 256],
+  [116, 111]
 ]
 ```
 
-`ll` inside `Hello` becomes 256. The `o` and the following space are in
-different chunks, so they stay 111 and 32.
+The pattern produces `["to", " the", " top", " of", " the", " tree"]`. Encoding
+these chunks independently gives 13 IDs instead of 11:
 
-Three rules settle the tricky cases:
+```text
+bytes     ██████████████████████  22 tokens
+encode    ███████████             11 tokens   without pre-tokenization
+split     █████████████           13 tokens   ← this stage
+GPT-2     ██████                   6 tokens   ← comparison
+```
 
-- The optional space before letters, numbers, and punctuation is U+0020 only. A
-  non-breaking space is a chunk of its own.
-- Contractions are case sensitive. `don't` splits into `don` and `'t`, and
-  `DON'T` splits into `DON`, `'`, and `T`.
-- Devanagari vowel signs are marks, outside `\p{L}`, so a run of them is its own
-  chunk. `हिंदी` splits into `ह`, `िं`, `द`, and `ी`.
+The rule `[258, 256]` joins `␠the` to the `␠t` of the following word, where `␠`
+marks a space. It previously applied twice. Those pieces now lie in different
+chunks, so both merges are forbidden and two more IDs remain. The text is
+unchanged. The higher count reflects the new boundary rule, not a change in
+merge ranks or IDs. GPT-2's six-token result is a comparison, not the result of
+these five rules.
 
-With `--pretokenize gpt2`, the `encode` command reads the same `text.txt` and
-`merges.json` as before.
+</details>
 
 ### Tests
 
-The tester will write `Hello world's 123!!` to `text.txt` and
-`[[108, 108], [111, 32]]` to `merges.json`, then execute your program like this:
+The tester will write `Hello world's 123!!` to `text.txt`, with no trailing
+newline, and `[[108, 108], [111, 32]]` to `merges.json`, then execute your
+program like this:
 
 ```bash
 $ ./your_program.sh encode text.txt --merges merges.json --pretokenize gpt2
 ```
 
-Your program must print the token ids as a JSON array:
+Your program must print the token IDs as a JSON array:
 
 ```json
 [
@@ -96,33 +155,39 @@ Your program must print the token ids as a JSON array:
 ]
 ```
 
-The tester will also run your program on a few other files, including `DON'T`,
-`हिंदी`, a non-breaking space, and the sentence from "Your progress".
+The tester will also check `DON'T`, `हिंदी`, `foo\u00a0bar`, `don't DON'T`,
+`foo\u00a0\u00a0bar`, and the sentence from "Your progress". Here, `\u00a0`
+denotes an actual non-breaking space in the input.
 
 ### Notes
 
-- The apostrophe in the example is U+0027.
+- Print only the final JSON array to stdout, and send debug output to stderr.
 
 {{#lang_is_python}}
 
 - Your project already includes the [`regex`](https://pypi.org/project/regex/)
   package, which supports `\p{L}` and `++`. Use `import regex` in place of the
-  built-in `re`.
+  built-in `re`, and collect whole matches with `findall` or `finditer`.
 
 {{/lang_is_python}}
 
 {{#lang_is_typescript}}
 
-- TypeScript regexes don't support possessive quantifiers. Replace each `++`
-  with `+`, which gives the same chunks here, and use the `g` and `u` flags.
-  Without `u`, `\p{L}` matches the literal text `p{L}`.
+- TypeScript uses JavaScript's `RegExp`, which doesn't support possessive
+  quantifiers and has a different `\s` whitespace set. For this supplied
+  pattern, replace each `++` with `+`, every `\s` with `\p{White_Space}`, and
+  every `\S` with `\P{White_Space}`. The latter two match Unicode whitespace and
+  its complement. Use `g` to collect all matches and `u` for Unicode property
+  escapes. These substitutions are specific to this pattern, not a general way
+  to remove possessive quantifiers.
 
 {{/lang_is_typescript}}
 
 {{#lang_is_java}}
 
 - Compile the pattern with `Pattern.UNICODE_CHARACTER_CLASS`. Otherwise `\s`
-  doesn't match a non-breaking space.
+  doesn't match a non-breaking space. Collect whole matches with
+  `Matcher.find()`.
 
 {{/lang_is_java}}
 
@@ -148,9 +213,11 @@ The tester will also run your program on a few other files, including `DON'T`,
 {{#lang_is_cpp}}
 
 - `std::regex` has no `\p{L}`, so your project already includes
-  [PCRE2](https://pcre2project.github.io/pcre2/doc/pcre2api/), which runs the
-  pattern unchanged. Compile it with `PCRE2_UTF | PCRE2_UCP`, then call
-  `pcre2_match` in a loop, starting each search where the last chunk ended.
-  Without `PCRE2_UCP`, `\s` doesn't match a non-breaking space.
+  [PCRE2](https://pcre2project.github.io/pcre2/doc/pcre2api/). Compile with
+  `PCRE2_UTF | PCRE2_UCP`. For this pattern, replace every `\s` with
+  `\p{White_Space}` and every `\S` with `\P{White_Space}` to match Unicode
+  whitespace and its complement. PCRE2's `\s` also includes U+180E, which would
+  create different chunks. Call `pcre2_match` in a loop, starting each search
+  where the last chunk ended.
 
 {{/lang_is_cpp}}
