@@ -1,5 +1,6 @@
-Your `bytes` command exposes the starting tokens. In this stage, add `top-pair`
-to find the most frequent neighboring pair in a JSON list of token IDs.
+Your `bytes` command exposes the starting tokens. In this stage, you'll add
+`top-pair` to find the most frequent neighboring pair in a JSON list of token
+IDs.
 
 ### Why combine pairs?
 
@@ -8,7 +9,7 @@ before it. Your `bytes` command outputs 11 bytes. A token can represent several
 bytes joined together.
 
 To learn which tokens to combine, your training algorithm will repeatedly find
-the most frequent pair and merge it. This stage only finds the pair; later
+the most frequent pair and merge it. This stage only finds the pair. Later
 stages combine it and repeat. Encoding new text will use those learned merges
 rather than learn new ones.
 
