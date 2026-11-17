@@ -1,4 +1,4 @@
-In this stage, you'll implement the `decode` command to turn token ids back into
+In this stage, you'll implement the `decode` command to turn token IDs back into
 text.
 
 ### Your progress
@@ -6,45 +6,53 @@ text.
 <details>
   <summary>Back to the original text for the example sentence `to the top of the tree`</summary>
 
-Here's how many tokens the sentence `to the top of the tree` takes so far:
+For the exact sentence `to the top of the tree`, with no trailing newline,
+decoding the 11 IDs from earlier stages with the same five merges recovers all
+22 bytes and the original text:
 
 ```text
 bytes     ██████████████████████  22 tokens
 encode    ███████████             11 tokens
 decode    ██████████████████████  22 bytes, the original text   ← this stage
-GPT-2     ██████                   6 tokens   ← the goal
+GPT-2     ██████                   6 tokens   ← comparison
 ```
 
-Decoding those 11 ids with the same five merges gives the sentence back.
+The `decode` command prints the text, not a new list of byte IDs. GPT-2's
+six-token result is a comparison, not the result of these five merges.
 
 </details>
 
 ### Why decode?
 
-A language model writes its answer as token ids. Decode turns those ids back
-into text.
+Encoding groups bytes into tokens. Decoding recovers text from those token IDs,
+but a token can hold only part of a character. You must recover the bytes of
+every token and join them before turning any of them into text.
 
-👋 is four UTF-8 bytes, `[240, 159, 145, 139]`. GPT-2 splits them across two
-tokens, `[41840, 233]`, ids from its own vocabulary. Token boundaries don't have to line up with character
-boundaries: the first token holds `[240, 159, 145]` and the second holds
-`[139]`. UTF-8 needs all four bytes to make 👋, so decoding the first token by
-itself gives the replacement character `�`. Join the bytes from both tokens
-first, and the result is 👋.
-
-Your decoder does the same with any text. Complete characters come back as
-themselves. Bytes that stop halfway through a character come back as `�`.
+For example, 👋 is four UTF-8 bytes, `[240, 159, 145, 139]`. With merges
+`[[240, 159], [145, 139]]`, ID 256 holds `[240, 159]` and ID 257 holds
+`[145, 139]`. Together, IDs `[256, 257]` represent 👋. Neither token holds a
+complete character. Decoding them separately and then joining the text produces
+`���`, because the decoder replaces incomplete or invalid byte sequences with
+`�`. Joining their bytes first produces the full four-byte encoding of 👋.
 
 ### The `decode` command
 
 The `decode` command parses two JSON files in the formats from earlier stages:
-`ids.json` is an array of ids, and `merges.json` is an array of pairs.
+`ids.json` is an array of token IDs, and `merges.json` is an array of learned
+pairs. To recover bytes, you need a mapping from each token ID to the byte
+sequence it represents. This mapping is the tokenizer's **vocabulary**.
 
-1. Build the same vocabulary training would. Id `n` below 256 is the single byte
-   `n`. Id `256 + i` is the bytes of the first id in merge `i`, followed by the
-   bytes of the second.
-2. Join every token's bytes into one buffer.
-3. Decode that buffer as UTF-8. Wherever the bytes are invalid, use the
-   replacement character U+FFFD.
+1. Start the vocabulary with IDs 0 through 255. ID `n` represents the single
+   byte `n`.
+2. Read the merges in list order. The pair at zero-based index `i` defines ID
+   `256 + i`. Its bytes are the first ID's byte sequence followed by the second
+   ID's byte sequence. A pair can include earlier merged IDs, whose bytes you
+   have already reconstructed.
+3. Look up each ID in `ids.json` and join its bytes into one buffer, in input
+   order. Join across every token boundary, including between merged tokens.
+4. Decode the whole buffer as UTF-8, using the replacement character `�`
+   (U+FFFD) for malformed byte sequences, as described below. Print the
+   resulting text as one JSON string.
 
 For example, `[258, 100]` with the three merges from `aaabdaaabac` prints:
 
@@ -55,49 +63,63 @@ For example, `[258, 100]` with the three merges from `aaabdaaabac` prints:
 `258` expands to `257` and `98`, then to `256`, `97`, and `98`, and finally to
 the bytes of `aaab`. `100` is `d`.
 
-`[240, 159, 145, 139]` prints the wave emoji.
+With no merges, `[240, 159, 145, 139]` also prints the wave emoji as the JSON
+string `"👋"`.
 
 ### How many replacement characters?
 
-U+FFFD, shown as `�`, is a replacement _character_, not a replacement byte. One
-`�` can stand for several bytes. Read the buffer left to right, one character at
-a time:
+U+FFFD is the Unicode identifier for the replacement _character_ `�`, not a
+replacement byte. One `�` can stand for several bytes, but it must not swallow
+the bytes of a valid character that follows.
 
-- The first byte says how long the character is. 0–127 is a 1-byte character,
-  194–223 starts a 2-byte one, 224–239 a 3-byte one, and 240–244 a 4-byte one.
-- Every byte after the first must be a continuation byte, 128–191.
-- If the character is complete, output it. If a byte doesn't fit, or the buffer
-  ends first, output one `�` for the bytes read so far and start the next
-  character at the byte that didn't fit.
-- A byte that can't start a character, like 255 or a stray continuation byte,
-  is one `�` by itself.
+UTF-8 gives each character a valid byte pattern. In a multi-byte encoding, the
+first byte is the **leading byte** and indicates the expected number of bytes.
+The remaining bytes are **continuation bytes**. Read the joined buffer from left
+to right using these rules:
 
-| Bytes        | Prints           | Why                                                                                                                                 |
-| ------------ | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `[240, 159]` | `"\uFFFD"`       | 240 starts a 4-byte character and 159 continues it. The buffer ends first, so both bytes are one `�`.                               |
-| `[255, 255]` | `"\uFFFD\uFFFD"` | 255 never starts a character, so each 255 is its own `�`.                                                                           |
-| `[240, 240]` | `"\uFFFD\uFFFD"` | The second 240 doesn't continue the first, so the first 240 is one `�`. The buffer ends after the second 240, so it is another `�`. |
+- A byte in 0–127 is a complete one-byte encoding. Leading bytes in 194–223
+  expect two bytes in total, 224–239 expect three, and 240–244 expect four.
+  Expected length alone does not make a sequence valid.
+- Continuation bytes must be in 128–191. Four leading bytes further restrict the
+  second byte, as listed in "The exact rule" below. A complete sequence that
+  obeys these ranges decodes to its character.
+- If the buffer ends during an otherwise valid prefix, replace that whole prefix
+  with one `�`. If the next byte is not allowed at its position, replace the
+  valid prefix so far with one `�` and reconsider that next byte as the start of
+  a new sequence.
+- A byte that cannot start a valid encoding, such as 255 or a stray continuation
+  byte, is one `�` by itself.
+
+| Bytes        | Prints           | Why                                                                                                                                                  |
+| ------------ | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `[240, 159]` | `"\uFFFD"`       | 240 expects four bytes and 159 is an allowed second byte. This valid prefix is cut off, so both bytes become one `�`.                                |
+| `[255, 255]` | `"\uFFFD\uFFFD"` | 255 cannot start a valid encoding, so each 255 is its own `�`.                                                                                       |
+| `[240, 240]` | `"\uFFFD\uFFFD"` | The second 240 cannot continue the first, so the first is one `�`. Reconsidering the second 240 starts another truncated prefix, giving another `�`. |
 
 <details>
   <summary>The exact rule</summary>
 
-For invalid input, the tests in this stage only use cut-off characters and
-bytes that never appear in UTF-8, so the rule above is enough. UTF-8 also limits the second byte after
-four lead bytes, which rules out overlong encodings, surrogates, and values
-above U+10FFFF:
+The malformed inputs tested here are `[240, 159]` and `[255, 255]`. For the
+general replacement rule, the second-byte restrictions also matter. UTF-8 does
+not allow every combination of leading and continuation bytes as a character
+encoding. These four leading bytes have narrower second-byte ranges:
 
-| First byte | Length | Second byte |
-| ---------- | ------ | ----------- |
-| 224        | 3      | 160–191     |
-| 237        | 3      | 128–159     |
-| 240        | 4      | 144–191     |
-| 244        | 4      | 128–143     |
+| Leading byte | Expected bytes in total | Allowed second byte |
+| ------------ | ----------------------- | ------------------- |
+| 224          | 3                       | 160–191             |
+| 237          | 3                       | 128–159             |
+| 240          | 4                       | 144–191             |
+| 244          | 4                       | 128–143             |
 
-A second byte outside its range doesn't fit, just like any other byte that
-doesn't continue a character. This is the Unicode Standard's
-[maximal subpart rule](https://www.unicode.org/versions/Unicode16.0.0/core-spec/chapter-3/#G66453).
-The built-in decoders in Python, Rust, and TypeScript follow it exactly. Java's
-differs only on surrogates, which these tests don't use.
+A second byte outside its allowed range does not extend a valid prefix. For
+example, in `[240, 128]`, 128 is a continuation byte but is not allowed
+after 240. Replace 240 with one `�`, then reconsider 128. It cannot start a
+valid encoding, so it becomes another `�`.
+
+Replacing the longest valid prefix, or a single invalid starter, is called
+[substitution of maximal subparts](https://www.unicode.org/versions/Unicode16.0.0/core-spec/chapter-3/#G66453)
+in the Unicode Standard. This is the replacement behavior required here, not one
+replacement per invalid byte or one per run of invalid bytes.
 
 </details>
 
@@ -117,14 +139,15 @@ Your program must print the text as a JSON string:
 "aaabd"
 ```
 
-The tester will also run your program on a few other lists, including the full
-wave emoji, half of the wave emoji, bytes that are never valid UTF-8, and the
-ids of the sentence from "Your progress".
+The tester will also check the full wave emoji with no merges, the truncated
+wave bytes `[240, 159]`, invalid bytes `[255, 255]`, quotes, a backslash and a
+newline that need JSON escaping, the emoji split across merged tokens, and the
+IDs of the sentence from "Your progress".
 
 ### Notes
 
-- Join every token's bytes before decoding. The half-emoji is one replacement
-  character. The program should keep running when the bytes are not valid UTF-8.
+- Join every token's bytes before decoding. The truncated wave bytes produce one
+  replacement character. Keep running when the bytes are not valid UTF-8.
 
 {{#lang_is_python}}
 
@@ -134,13 +157,18 @@ ids of the sentence from "Your progress".
 
 {{#lang_is_typescript}}
 
-- `new TextDecoder().decode(bytes)` replaces invalid bytes this way.
+- `new TextDecoder("utf-8", { ignoreBOM: true }).decode(bytes)` decodes with
+  replacement. `ignoreBOM: true` preserves an initial byte-order mark in the
+  text instead of dropping it.
 
 {{/lang_is_typescript}}
 
 {{#lang_is_java}}
 
-- `new String(bytes, StandardCharsets.UTF_8)` replaces invalid bytes this way.
+- `new String(bytes, StandardCharsets.UTF_8)` gives the required replacements
+  for the malformed inputs tested here. Its grouping can differ for other
+  malformed sequences. To match the general rule on those too, follow the
+  byte-pattern rules above.
 
 {{/lang_is_java}}
 
@@ -164,12 +192,11 @@ ids of the sentence from "Your progress".
 {{#lang_is_cpp}}
 
 - Write the decoding loop yourself, following the rule in "How many replacement
-  characters?". The C++ standard library has no UTF-8 decoder that replaces
-  invalid bytes. Valid characters can be copied to the output as their bytes,
-  and each `�` is the 3 bytes 239, 191, 189.
+  characters?". Valid encodings can be copied to the output as their bytes, and
+  each `�` is the 3 bytes 239, 191, 189.
 
 {{/lang_is_cpp}}
 
-- Print the text with your JSON library, so quotes, backslashes, and newlines
-  are escaped correctly. `"\uFFFD"` and `"�"` are the same JSON string, so
-  either passes.
+- Print only the resulting JSON string to stdout, using your JSON library so
+  quotes, backslashes, and newlines are escaped correctly. Send debug output to
+  stderr. `"\uFFFD"` and `"�"` are the same JSON string, so either passes.
