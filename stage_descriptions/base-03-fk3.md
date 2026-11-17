@@ -1,5 +1,5 @@
-Your `top-pair` command finds a pair to combine. In this stage, add `merge` to
-replace a supplied pair of token IDs with the new ID `256`.
+Your `top-pair` command finds a pair to combine. In this stage, you'll add
+`merge` to replace a supplied pair of token IDs with the new ID `256`.
 
 ### Why merge?
 
