@@ -119,7 +119,8 @@ Other tests cover `strawberry strawberry`, Hindi, indented code, and the
 progress sentence. No test text contains `<|endoftext|>`. Special-token handling
 is not required.
 
-Logs can show short lists of valid IDs as pieces, like `"Hello" " world"`.
+For short lists of valid IDs, logs can show the text represented by each token,
+such as `"Hello" " world"`.
 
 ### Notes
 
