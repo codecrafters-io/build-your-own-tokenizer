@@ -1,24 +1,20 @@
-Your encoder currently applies merges to the whole text. In this stage, add
-`--pretokenize gpt2` to split the text into chunks first, then apply your
-existing ranked merges separately within each chunk.
-
-Keep using your custom merge list and token IDs. Without this flag, `encode`
-must keep its previous whole-text behavior.
+Your encoder currently applies merges to the whole text. In this stage, you'll
+add `--pretokenize gpt2` to split text into chunks and merge within each one.
 
 ### Why split first?
 
 The
 [GPT-2 paper](https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf)
-found plain BPE spending merges on `dog.`, `dog!`, and `dog?`, one token for
-each variation. So GPT-2's merges were learned on text that was split into
-chunks first, and no merge ever joined two chunks.
+describes splitting text before learning merges to avoid separate tokens for
+`dog.`, `dog!`, and `dog?`.
 
-Splitting before encoding preserves those boundaries. GPT-2 encodes
-`dog. dog! dog?` as `dog`, `.`, `␠dog`, `!`, `␠dog`, and `?`, where `␠` marks a
-space. `␠dog` is one token, used twice, rather than a different token for each
-punctuation mark.
+GPT-2 encodes `dog. dog! dog?` as `dog`, `.`, `␠dog`, `!`, `␠dog`, and `?`. Here
+`␠` marks a space, and `␠dog` is reused rather than joined to punctuation.
 
 ### Splitting with GPT-2's pattern
+
+Keep using your custom merge list and token IDs. Without the new flag, `encode`
+must keep its whole-text behavior.
 
 Use this GPT-2 splitting pattern from
 [`tiktoken`](https://github.com/openai/tiktoken/blob/main/tiktoken_ext/openai_public.py):
@@ -30,12 +26,12 @@ Use this GPT-2 splitting pattern from
 The pattern starts with an apostrophe, U+0027. Its first branch matches the
 contractions `'s`, `'d`, `'m`, `'t`, `'ll`, `'ve`, and `'re`. `\p{L}` matches
 Unicode letters and `\p{N}` matches Unicode numbers. The ` ?` branches can
-attach one ordinary space, U+0020, to a following run; the final branches handle
+attach one ordinary space, U+0020, to a following run. The final branches handle
 other whitespace runs.
 
-Use the pattern's matches as chunks, preserving every character and their order.
-Convert each chunk to UTF-8 bytes, encode it with the supplied `--merges`, and
-concatenate the resulting IDs. Never merge across chunk boundaries.
+Use the matches as chunks, preserving all characters in order. Convert each
+chunk to UTF-8 bytes, apply your ranked merges, and concatenate the IDs. Never
+merge across chunk boundaries.
 
 For example, `Hello world's 123!!` splits into five chunks:
 
@@ -58,16 +54,13 @@ different chunks, so they stay 111 and 32.
 
 These examples illustrate the pattern's boundaries:
 
-- The optional leading space is U+0020 only. In `foo\u00A0bar`, where `\u00A0`
-  represents one non-breaking space, the chunks are `foo`, the non-breaking
-  space, and `bar`. Do not trim whitespace or attach every whitespace character
-  to the next word; use the pattern's matches.
+- The optional leading space is U+0020 only. In `foo\u00A0bar`, `\u00A0` denotes
+  one non-breaking space. The chunks are `foo`, that space, and `bar`. Preserve
+  whitespace and use the pattern's matches.
 - Contractions are case sensitive. `don't` splits into `don` and `'t`, and
   `DON'T` splits into `DON`, `'`, and `T`.
-- The vowel signs and other combining marks in `हिंदी` are outside `\p{L}` and
-  `\p{N}`. The word splits into `ह`, `िं`, `द`, and `ी`. Marks can share the
-  non-whitespace branch with punctuation, so they are not always isolated from
-  it.
+- The combining marks in `हिंदी` are outside `\p{L}` and `\p{N}`. The word
+  splits into `ह`, `िं`, `द`, and `ी`. Marks can share a chunk with punctuation.
 
 ### Your progress
 
@@ -83,44 +76,20 @@ split     █████████████           13 tokens   ← this
 GPT-2     ██████                   6 tokens   ← the goal
 ```
 
-One learned rule joins `␠the` to the `␠t` of the next word. Those pieces are now
-in different chunks, so that rule no longer applies. The higher count reflects
-the new boundary restriction, not a failure to merge within each chunk.
+One learned rule joins `␠the` to the `␠t` of the next word. Chunk boundaries now
+block that merge, so the higher count is expected.
 
 </details>
 
-### Tests
-
-The tester will write `Hello world's 123!!` to `text.txt` and
-`[[108, 108], [111, 32]]` to `merges.json`, then execute your program like this:
-
-```bash
-$ ./your_program.sh encode text.txt --merges merges.json --pretokenize gpt2
-```
-
-Your program must print the token IDs as a JSON array to stdout:
-
-```json
-[
-  72, 101, 256, 111, 32, 119, 111, 114, 108, 100, 39, 115, 32, 49, 50, 51, 33,
-  33
-]
-```
-
-The tester will also run your program on a few other files, including `DON'T`,
-`हिंदी`, a non-breaking space, and the sentence from "Your progress".
-
 ### Regex libraries and Unicode versions
 
-Regex libraries differ in both syntax and character classes. The reference uses
-Unicode's `White_Space` property for `\s`; the guidance below accounts for
-libraries whose `\s` has a different meaning.
+The reference uses Unicode's `White_Space` property for `\s`. Some libraries
+need the syntax or whitespace adaptations below.
 
-Unicode versions also differ on which characters count as letters or numbers.
-Even the challenge's Python reference and native `tiktoken` disagree on some
-recently added letters. Matching this stage's tests does not establish identical
-tokenization for every Unicode version; a pattern that compiles can still split
-those characters differently.
+Letter and number categories also depend on the Unicode version. Even the
+challenge's Python reference and native `tiktoken` disagree on some recently
+added letters. Passing these tests does not guarantee identical tokenization
+across Unicode versions.
 
 {{#lang_is_python}}
 
@@ -175,7 +144,28 @@ those characters differently.
   version's `\s` also treats U+180E as whitespace, unlike the reference. Compile
   with `PCRE2_UTF | PCRE2_UCP`, then call `pcre2_match` in a loop, starting each
   search where the last chunk ended. The explicit whitespace properties do not
-  update PCRE2's letter and number tables; the Unicode-version limit above still
+  update PCRE2's letter and number tables. The Unicode-version limit above still
   applies.
 
 {{/lang_is_cpp}}
+
+### Tests
+
+The tester will write `Hello world's 123!!` to `text.txt` and
+`[[108, 108], [111, 32]]` to `merges.json`, then execute your program like this:
+
+```bash
+$ ./your_program.sh encode text.txt --merges merges.json --pretokenize gpt2
+```
+
+Your program must print the token IDs as a JSON array to stdout:
+
+```json
+[
+  72, 101, 256, 111, 32, 119, 111, 114, 108, 100, 39, 115, 32, 49, 50, 51, 33,
+  33
+]
+```
+
+The tester will also run your program on a few other files, including `DON'T`,
+`हिंदी`, a non-breaking space, and the sentence from "Your progress".
