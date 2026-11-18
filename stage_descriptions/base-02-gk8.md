@@ -1,66 +1,44 @@
-In this stage, you'll implement the `top-pair` command to find the pair of
-tokens a tokenizer should combine next.
+Your program can represent text as one token per byte. Frequent pairs are
+candidates for larger, reusable tokens that can shorten the sequence a model
+receives. In this stage, you'll add `top-pair` to find the most frequent pair of
+neighboring token IDs.
 
-### Why combine pairs?
+### Count neighboring pairs
 
-GPT-2 sees `Hello world` as 2 tokens: `Hello`, and `world` with the space before
-it. Your `bytes` command sees it as 11 bytes. A tokenizer gets from 11 down to 2
-by repeatedly combining the most common pair of tokens into a new token.
+The command reads a JSON array of IDs from `ids.json`. These are already
+integers, so this command does not convert text to UTF-8.
 
-This stage finds the most common pair. Later stages combine it and repeat.
+Count every pair of adjacent IDs. The pair is ordered: `(1, 2)` means 1 followed
+by 2, and `(2, 1)` is a different pair. Overlapping pairs count too. The bytes
+of `aaa` are `[97, 97, 97]`, which contains `(97, 97)` at two positions.
 
-### The `top-pair` command
+Choose the pair with the highest total count. If several pairs tie, choose the
+one whose first occurrence is furthest left in the input:
 
-The `top-pair` command counts every pair of neighboring ids and prints the one
-that appears most often. Overlapping pairs count, so `aaa` has the pair
-`(97, 97)` twice. When two pairs tie, the pair that appears first, reading left
-to right, wins.
+- In `[8, 9, 1, 2]`, every pair occurs once, so `(8, 9)` wins.
+- In `[1, 2, 3, 4, 3, 4, 1, 2]`, both `(1, 2)` and `(3, 4)` occur twice.
+  `(1, 2)` wins because its first occurrence is earlier. The order in which
+  pairs reach their final counts does not change the winner.
 
-Your program reads ids from `ids.json` and parses it as JSON. The ids are
-already integers, so there is no UTF-8 step for this stage.
-
-For example, in `[1, 2, 3, 1, 2]`, the pairs are `(1, 2)`, `(2, 3)`, `(3, 1)`,
-and `(1, 2)` again. The pair `(1, 2)` appears twice, so the most frequent pair
-is:
-
-```json
-[1, 2]
-```
-
-In `[8, 9, 1, 2]`, the pairs `(8, 9)`, `(9, 1)`, and `(1, 2)` each appear once.
-They all tie, so the first pair from the left wins:
-
-```json
-[8, 9]
-```
-
-In `[1, 2, 3, 4, 3, 4, 1, 2]`, `(1, 2)` and `(3, 4)` both appear twice. `(1, 2)`
-appears first, so it wins:
-
-```json
-[1, 2]
-```
+Print the winning pair as a two-element JSON array. Leave the input IDs
+unchanged. Inputs in this stage contain at least two IDs, and IDs can be larger
+than 255.
 
 ### Tests
 
-The tester will write `[1, 2, 3, 1, 2]` to `ids.json` and execute your program
-like this:
+The tester writes `[1, 2, 3, 1, 2]` to `ids.json` and runs:
 
 ```bash
 $ ./your_program.sh top-pair ids.json
 ```
 
-Your program must print the pair as a JSON array:
+The pair `(1, 2)` appears twice, while the other pairs appear once. Your program
+must print:
 
 ```json
 [1, 2]
 ```
 
-The tester will also run your program on a few other lists, including ties,
-overlapping pairs, and the ids of `aaabdaaabac`.
-
-### Notes
-
-- Print only the winning pair. Later stages give that pair its own new id.
-- Don't assume ids fit in a byte. Later stages create ids 256 and up and count
-  their pairs the same way.
+The tester also checks ties, overlapping pairs, pairs starting at different
+positions, reversed pairs, and IDs above 255. Tie cases run repeatedly, so the
+same input must always produce the same winner.

@@ -1,54 +1,51 @@
-In this stage, you'll implement the first step of a tokenizer, a `bytes` command
-that converts text into UTF-8 bytes.
+Before your tokenizer can group text into pieces, it needs a consistent way to
+represent the input. In this stage, you'll add a `bytes` command that reads a
+text file and prints its UTF-8 bytes.
+
+### Tokens, IDs, and bytes
+
+A tokenizer converts text into a sequence of pieces called **tokens**. Each
+token has an integer label called a **token ID**, which is how the tokenizer
+represents that piece to a language model.
+
+In this build, each token initially holds one byte. A byte is a value from 0
+to 255. **UTF-8** represents text using these byte values, sometimes using
+several bytes for one character. Starting with all 256 possible byte values lets
+your tokenizer represent any UTF-8 text, including words it has never
+encountered.
+
+For now, a token's ID is its byte value. The text `hi 👋` becomes:
+
+```json
+[104, 105, 32, 240, 159, 145, 139]
+```
+
+`h` is byte 104, `i` is 105, and the space is 32. The wave emoji takes the last
+four bytes. One visible character can therefore occupy several starting tokens.
 
 ### The `bytes` command
 
-A language model can't read text. It only reads numbers, called token IDs. A
-tokenizer turns the text into token IDs for the model.
+Read the file named after `bytes` and print its bytes in order as a JSON array.
+Preserve the entire file, including spaces, tabs, and line endings. A space is
+32, a tab is 9, and a newline represented by `\n` is 10. An empty file produces
+`[]`.
 
-The first step of a tokenizer is to convert raw text into bytes.
+Print exactly one JSON value to stdout. Send debug messages to stderr, as the
+starter code's log line does. The tester parses the JSON, so spacing between
+array elements does not matter.
 
-The `bytes` command reads a file and prints its
-[UTF-8](https://www.rfc-editor.org/rfc/rfc3629) bytes as a JSON array, one
-number per byte.
-
-```bash
-$ ./your_program.sh bytes text.txt
-```
-
-For example, if the file contains `hi 👋`, the output is:
-
-```json
-[104, 105, 32, 240, 159, 145, 139]
-```
-
-`h` is 104, `i` is 105, and the space is 32. The last four numbers,
-`240, 159, 145, 139`, are the wave emoji.
+The starter contains a commented-out implementation of this command. Find that
+block and enable it to pass this stage.
 
 ### Tests
 
-The tester will write `hi 👋` to `text.txt` and execute your program like this:
+The tester creates a UTF-8 file called `text.txt` containing `hi 👋`, with no
+trailing newline, and runs:
 
 ```bash
 $ ./your_program.sh bytes text.txt
 ```
 
-Your program must print the bytes as a JSON array:
-
-```json
-[104, 105, 32, 240, 159, 145, 139]
-```
-
-The tester will also run your program on a few other files, including an empty
-file, a file with only an emoji, and a file with several lines.
-
-### Notes
-
-- Spaces, newlines, and tabs are bytes too. Keep every one of them: a space is
-  `32`, a newline is `10`, and a tab is `9`. An empty file has no bytes, so its
-  output is `[]`.
-- Every byte is a number from 0 to 255. A larger number means you're printing
-  characters, not bytes.
-- The tester reads your output as JSON, so `[104,105]` and `[104, 105]` both
-  pass. Print only the JSON array to stdout, and send debug output to stderr,
-  like the starter code's log line.
+The expected output is the seven-byte array shown above. The tester also checks
+an empty file, an emoji on its own, and text with multiple lines. Every output
+value must be between 0 and 255.

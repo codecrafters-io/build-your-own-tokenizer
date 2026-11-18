@@ -1,87 +1,59 @@
-In this stage, you'll implement the `train` command to learn which pairs to
-merge from a text file.
+Your program can find a frequent pair and merge it. Learning reusable pairs will
+let your tokenizer use the same pieces when it encounters other text. In this
+stage, you'll combine those operations in a `train` command that learns merge
+rules from a text file.
 
-### Your progress
+### Learn a vocabulary
 
-<details>
-  <summary>22 → 11 tokens for the example sentence `to the top of the tree`</summary>
+The example text used for training is called a **corpus**. Training here means
+choosing token pieces and assigning their IDs. You won't train a language model.
 
-Here's how many tokens the sentence `to the top of the tree` takes so far:
+A tokenizer's **vocabulary** associates each ID with the bytes it represents.
+Yours starts with the 256 byte tokens. Each learned merge adds another token:
+the first gets ID 256, the second gets 257, and so on. New tokens can themselves
+be part of later pairs, allowing longer pieces to form.
 
-```text
-bytes     ██████████████████████  22 tokens
-train     ███████████             11 tokens   ← this stage
-GPT-2     ██████                   6 tokens   ← the goal
-```
-
-The 11 comes from five merges learned from the sentence itself, with
-`--num-merges 5`. After the fifth merge, the sentence is 11 tokens long.
-
-</details>
-
-### How GPT-2 learned its merges
-
-GPT-2's tokenizer comes from repeating the steps of earlier stages: find the
-most frequent pair, merge it, and repeat. GPT-2 did this 50,000 times on its
-training text. Its first six merges were:
-
-| New id | Pair         | Token |
-| ------ | ------------ | ----- |
-| 256    | `(32, 116)`  | `␠t`  |
-| 257    | `(32, 97)`   | `␠a`  |
-| 258    | `(104, 101)` | `he`  |
-| 259    | `(105, 110)` | `in`  |
-| 260    | `(114, 101)` | `re`  |
-| 261    | `(111, 110)` | `on`  |
-
-`␠` marks a space, byte 32. Later merges build on earlier ones. Merge 262
-combines `␠t` and `he` into `␠the`. This loop is called byte-pair encoding, or
-BPE.
+Repeatedly selecting a frequent pair and combining it is called **byte-pair
+encoding**, or **BPE**. Although the starting tokens are bytes, later rounds can
+combine tokens that each represent several bytes.
 
 ### The `train` command
 
-The `train` command reads text from a file and runs the loop as many times as
-`--num-merges` asks:
+Read the corpus file and perform the number of merges requested by
+`--num-merges`:
 
-1. Convert the text into UTF-8 bytes.
-2. Find the most frequent pair. On a tie, the pair that appears first, reading
-   left to right, wins.
-3. Replace that pair with the next new id. The first merge creates 256, the
-   second creates 257, and so on.
-4. Repeat steps 2 and 3 on the new list until you have done `--num-merges`
-   merges. Keep going even when the most frequent pair appears only once.
+1. Start with the corpus's UTF-8 byte values as token IDs.
+2. Count adjacent pairs in the current sequence, including overlaps.
+3. Select the most frequent pair, breaking ties by its first occurrence.
+4. Replace all non-overlapping occurrences of that pair from left to right with
+   the next unused ID. Record the pair.
+5. Repeat from step 2 until you have performed the requested number of merges.
 
-For example, here's `aaabdaaabac` with `--num-merges 3`:
+Recount after every round because a merge changes which tokens are neighbors.
+Continue even when the most frequent pair occurs only once. The tests request no
+more merges than the corpus allows.
 
-| Round | Ids                                             | Most frequent pair                          | New id |
+For `aaabdaaabac` and three merges, the rounds are:
+
+| Round | IDs before the merge                            | Selected pair                               | New ID |
 | ----- | ----------------------------------------------- | ------------------------------------------- | ------ |
-| 1     | `[97, 97, 97, 98, 100, 97, 97, 97, 98, 97, 99]` | `(97, 97)`, 4 times                         | 256    |
+| 1     | `[97, 97, 97, 98, 100, 97, 97, 97, 98, 97, 99]` | `(97, 97)`, four occurrences                | 256    |
 | 2     | `[256, 97, 98, 100, 256, 97, 98, 97, 99]`       | `(256, 97)`, tied with `(97, 98)` and first | 257    |
-| 3     | `[257, 98, 100, 257, 98, 97, 99]`               | `(257, 98)`, 2 times                        | 258    |
+| 3     | `[257, 98, 100, 257, 98, 97, 99]`               | `(257, 98)`, two occurrences                | 258    |
 
-The command prints the merged pairs in order:
-
-```json
-[
-  [97, 97],
-  [256, 97],
-  [257, 98]
-]
-```
-
-The tester parses your output as JSON, so spacing and line breaks are up to you.
-`[[97,97],[256,97],[257,98]]` on one line passes too.
+Print the recorded pairs in the order they were selected. The pair at zero-based
+index `i` creates token ID `256 + i`, so the output needs no separate ID field.
+The final sequence for the corpus stays internal.
 
 ### Tests
 
-The tester will write `aaabdaaabac` to `corpus.txt` and execute your program
-like this:
+The tester writes `aaabdaaabac` to `corpus.txt` and runs:
 
 ```bash
 $ ./your_program.sh train corpus.txt --num-merges 3
 ```
 
-Your program must print the merged pairs as a JSON array:
+Your program must print:
 
 ```json
 [
@@ -91,11 +63,7 @@ Your program must print the merged pairs as a JSON array:
 ]
 ```
 
-The tester will also ask for 6, 10, and 50 merges, including on a corpus with
-spaces and newlines, and for 5 merges on the sentence from "Your progress".
-
-### Notes
-
-- Print only the pairs, in the order you merged them. A pair's position gives
-  its id, so the list needs no ids.
-- The tester never asks for more merges than the text allows.
+The tester also requests 6, 10, and 50 merges, and uses corpora containing
+spaces, newlines, accented letters, and emoji. It also requests five merges for
+`to the top of the tree`. Those five rules reduce that corpus from 22 byte
+tokens to 11 tokens.

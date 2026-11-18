@@ -1,97 +1,70 @@
-In this stage, you'll implement the `encode` command to turn new text into token
-ids with a list of learned merges.
+Your `train` command produces a list of merge rules. Reusing those rules keeps
+each token ID's meaning fixed across different inputs. In this stage, you'll add
+`encode` to apply the learned rules to new text.
 
-### Your progress
+### Apply learned rules
 
-<details>
-  <summary>11 tokens for the example sentence `to the top of the tree`</summary>
+The command reads text from `text.txt` and an ordered JSON array of pairs from
+`merges.json`, in the format that `train` prints.
 
-Here's how many tokens the sentence `to the top of the tree` takes so far:
+A pair's **rank** is its zero-based position in that list. Lower ranks have
+higher priority: rank 0 applies before rank 1. As in training, the pair at index
+`i` creates ID `256 + i`.
 
-```text
-bytes     ██████████████████████  22 tokens
-encode    ███████████             11 tokens   ← this stage
-GPT-2     ██████                   6 tokens   ← the goal
-```
+1. Convert the input text to UTF-8 byte IDs.
+2. Among adjacent pairs present in the current sequence, find the pair with the
+   lowest rank in the merge list. Ignore pairs absent from the list.
+3. Replace all non-overlapping occurrences of that pair from left to right with
+   its assigned ID.
+4. Repeat until no adjacent pair has a rule in the merge list.
 
-The 11 comes from encoding the sentence with the five merges learned from it.
+Keep any IDs that cannot be merged. An empty input produces `[]`.
 
-</details>
+For example, the rules `[[97, 97], [256, 97], [257, 98]]` learned from
+`aaabdaaabac` encode `aaab` as follows:
 
-### Why encode?
+| Round | Current IDs        | Lowest-ranked available pair | New ID |
+| ----- | ------------------ | ---------------------------- | ------ |
+| 1     | `[97, 97, 97, 98]` | `(97, 97)`, rank 0           | 256    |
+| 2     | `[256, 97, 98]`    | `(256, 97)`, rank 1          | 257    |
+| 3     | `[257, 98]`        | `(257, 98)`, rank 2          | 258    |
 
-GPT-2's tokenizer was trained once. Since then, it has encoded every prompt with
-the same 50,000 merges, replayed in the order they were learned. That is how
-`Hello world` becomes `[15496, 995]`, the same two ids every time.
+The result is `[258]`. The same rules encode the training corpus `aaabdaaabac`
+as `[258, 100, 258, 97, 99]`.
 
-Your `train` command produces exactly that kind of list. In this stage, you'll
-use it.
+### Training and encoding choose differently
 
-### The `encode` command
+Training selects a pair by its frequency in the changing corpus. Encoding uses
+the priorities already recorded in the merge file. It does not learn new rules
+from the input.
 
-The `encode` command reads text from `text.txt` and merges from `merges.json`, a
-JSON array of pairs in the same format `train` prints. A pair's position in the
-list is its rank, and the pair at index `i`, counting from 0, creates id
-`256 + i`.
-
-1. Convert the text into UTF-8 bytes.
-2. Find the pair with the earliest rank that is still present in the ids.
-3. Merge every occurrence of that pair, the same way the `merge` command does.
-4. Repeat until no pair of neighboring ids is in the list.
-
-For example, training on `aaabdaaabac` gave the merges
-`[[97, 97], [256, 97], [257, 98]]`. Here's how they encode the text `aaab`:
-
-| Round | Ids                | Pair with the earliest rank | New id |
-| ----- | ------------------ | --------------------------- | ------ |
-| 1     | `[97, 97, 97, 98]` | `(97, 97)`, rank 0          | 256    |
-| 2     | `[256, 97, 98]`    | `(256, 97)`, rank 1         | 257    |
-| 3     | `[257, 98]`        | `(257, 98)`, rank 2         | 258    |
-
-No pairs are left, so the output is:
-
-```json
-[258]
-```
-
-The same merges encode the training text as `[258, 100, 258, 97, 99]`.
-
-Rank is not frequency. Training picked the most frequent pair, but encoding
-ignores how often a pair appears. It only looks at rank.
-
-To see the difference, take a new text, `ababa`, and say `merges.json` is
-`[[98, 97], [97, 98]]`. The text's bytes are `[97, 98, 97, 98, 97]`, so
-`(97, 98)` and `(98, 97)` each appear twice.
-
-`(98, 97)` is first in `merges.json`, so it has the earliest rank and is merged
-first. That turns the ids into `[97, 256, 256]`. Both `98`s are now used up, so
-`(97, 98)` is no longer present, and the output is:
+For `ababa`, suppose the merge file is `[[98, 97], [97, 98]]`. Both pairs occur
+twice in the input bytes `[97, 98, 97, 98, 97]`. Encoding chooses `(98, 97)`
+because it has rank 0, producing:
 
 ```json
 [97, 256, 256]
 ```
 
+Using the training tie-breaker would choose the leftmost pair, `(97, 98)`, and
+produce a different result. During encoding, rank determines which pair to
+select. The left-to-right rule determines how to replace occurrences of that
+selected pair.
+
 ### Tests
 
-The tester will write `aaab` to `text.txt` and
-`[[97, 97], [256, 97], [257, 98]]` to `merges.json`, then execute your program
-like this:
+The tester writes `aaab` to `text.txt` and `[[97, 97], [256, 97], [257, 98]]` to
+`merges.json`, then runs:
 
 ```bash
 $ ./your_program.sh encode text.txt --merges merges.json
 ```
 
-Your program must print the token ids as a JSON array:
+Your program must print:
 
 ```json
 [258]
 ```
 
-The tester will also run your program on a few other files, including the
-training text, the `ababa` example above, an empty file, and the sentence from
-"Your progress".
-
-### Notes
-
-- Always apply the earliest learned merge that is still present.
-- Applying a later merge first can produce ids a model never saw in training.
+The tester also checks the training corpus, rank ordering, non-ASCII text, an
+empty file, and `to the top of the tree` with its five learned merges.
