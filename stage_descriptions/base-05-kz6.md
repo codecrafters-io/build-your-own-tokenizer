@@ -1,4 +1,4 @@
-Training chooses the vocabulary once. Encoding reuses it, so the same text and merge list always produce the same IDs. In this stage, you'll implement `encode` to turn text into token IDs using the merge rules learned by `encode`.
+Training chooses the vocabulary once. Encoding reuses it, so the same text and merge list always produce the same IDs. In this stage, you'll implement `encode` to turn text into token IDs using the merge rules that `train` learned.
 
 ### Applying learned rules
 
