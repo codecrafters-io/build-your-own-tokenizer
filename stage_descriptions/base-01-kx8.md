@@ -1,29 +1,24 @@
-In this stage, you'll implement the first step of a tokenizer, a `bytes` command
-that converts text into UTF-8 bytes.
+Your tokenizer will start with one token per byte before learning to combine
+them. In this stage, you'll implement `bytes`, a command that prints a file's
+bytes as numbers.
 
-### The `bytes` command
+### Starting with bytes
 
-A language model can't read text. It only reads numbers, called token IDs. A
-tokenizer turns the text into token IDs for the model.
+A tokenizer represents text as a sequence of token IDs for a language model.
+Each ID identifies a piece of the input, called a token. In this challenge,
+tokens start as single bytes and later grow to represent longer pieces.
 
-The first step of a tokenizer is to convert raw text into bytes.
+A byte holds an integer from 0 to 255.
+[UTF-8](https://www.rfc-editor.org/rfc/rfc3629) represents each Unicode
+character as one or more bytes. For example, `h` takes one byte, while `👋`
+takes four.
 
-The `bytes` command reads a file and prints its
-[UTF-8](https://www.rfc-editor.org/rfc/rfc3629) bytes as a JSON array, one
-number per byte.
+Those 256 possible byte values can represent text in any language. They give
+your tokenizer a fixed starting vocabulary, the set of tokens it recognizes.
+For now, each token's ID equals its byte value.
 
-```bash
-$ ./your_program.sh bytes text.txt
-```
-
-For example, if the file contains `hi 👋`, the output is:
-
-```json
-[104, 105, 32, 240, 159, 145, 139]
-```
-
-`h` is 104, `i` is 105, and the space is 32. The last four numbers,
-`240, 159, 145, 139`, are the wave emoji.
+The `bytes` command reads a file's bytes in order and prints them as a JSON
+array to stdout. You don't need to split words or combine bytes yet.
 
 ### Tests
 
@@ -39,16 +34,20 @@ Your program must print the bytes as a JSON array:
 [104, 105, 32, 240, 159, 145, 139]
 ```
 
-The tester will also run your program on a few other files, including an empty
-file, a file with only an emoji, and a file with several lines.
+`h` is 104, `i` is 105, and the space is 32. The last four numbers,
+`240, 159, 145, 139`, together represent the wave emoji.
+
+Other inputs include an empty file, an emoji on its own, and several lines of
+text.
 
 ### Notes
 
 - Spaces, newlines, and tabs are bytes too. Keep every one of them: a space is
   `32`, a newline is `10`, and a tab is `9`. An empty file has no bytes, so its
   output is `[]`.
-- Every byte is a number from 0 to 255. A larger number means you're printing
-  characters, not bytes.
+- Every output number must be between 0 and 255. A character's Unicode number
+  can exceed that range, so reading character numbers would give different
+  results.
 - The tester reads your output as JSON, so `[104,105]` and `[104, 105]` both
   pass. Print only the JSON array to stdout, and send debug output to stderr,
   like the starter code's log line.

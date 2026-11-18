@@ -7,9 +7,11 @@ short_name: "Tokenizer"
 release_status: "early_access"
 
 description_md: |-
-  Why do language models miscount the r's in "strawberry"? GPT-2 never sees the letters. Its tokenizer hands it three pieces: `st`, `raw`, and `berry`. A tokenizer is the program that splits text into pieces like these before a model reads it.
+  Why does adding a space change how GPT-2 splits `strawberry`?
 
-  In this challenge, you'll build one with byte-pair encoding, the algorithm GPT-2 uses. Yours starts from UTF-8 bytes and learns its own tokens from a text file. By the last stage, it loads GPT-2's vocabulary and splits `strawberry` into the same three pieces.
+  A tokenizer splits text into pieces called tokens and gives each a numeric ID for a language model. Tokens can include spaces. GPT-2's learned rules turn `strawberry` into `st`, `raw`, and `berry`, while ` strawberry` is one token. You'll build a tokenizer that learns rules, encodes and decodes text, and loads GPT-2's token-to-ID mapping to match its output.
+
+  You'll learn how UTF-8 represents text as bytes and how byte-pair encoding builds reusable tokens by merging frequent pairs.
 
 short_description_md: |-
   Learn about byte-pair encoding, UTF-8, and more
