@@ -8,7 +8,7 @@ A tokenizer converts text into a sequence of pieces called **tokens**. Each
 token has an integer label called a **token ID**, which is how the tokenizer
 represents that piece to a language model.
 
-In this build, each token initially holds one byte. A byte is a value from 0
+In this challenge, each token initially holds one byte. A byte is a value from 0
 to 255. **UTF-8** represents text using these byte values, sometimes using
 several bytes for one character. Starting with all 256 possible byte values lets
 your tokenizer represent any UTF-8 text, including words it has never
