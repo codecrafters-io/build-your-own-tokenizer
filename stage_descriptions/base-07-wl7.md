@@ -1,41 +1,24 @@
-In this stage, you'll add `--pretokenize gpt2` to `encode`. Your encoder
-currently allows merges across the whole input. This option will divide text
-into chunks first and allow merges only within each chunk, matching GPT-2's
-boundaries.
+GPT-2 separates words and punctuation before learning its merges, and an encoder must apply the same boundaries. In this stage, you'll add `--pretokenize gpt2` to `encode` to split text into chunks before merging.
 
 ### Why split before merging?
 
-GPT-2 separates words and punctuation before learning its merges. This lets
-word pieces be reused with different punctuation instead of spending
-vocabulary entries on combinations such as `dog.`, `dog!`, and `dog?`.
-The [GPT-2 paper](https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf)
-describes this choice.
+This lets word pieces be reused with different punctuation instead of spending vocabulary entries on combinations such as `dog.`, `dog!`, and `dog?`. The [GPT-2 paper](https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf) describes this choice.
 
-An encoder must apply the same boundaries used during training. This initial
-split is called pre-tokenization. Each chunk is a region where merges are
-allowed, and it can still produce several token IDs.
+An encoder that merges across those boundaries produces tokens GPT-2 never saw in those places. This initial split is called pre-tokenization. Each chunk is a region where merges are allowed, and it can still produce several token IDs.
 
-For now, keep using your existing JSON merge list. The next stage supplies
-GPT-2's full vocabulary. This stage changes only encoding with the new option.
-Keep `train` and encoding without the option working as before.
+For now, keep using your existing JSON merge list. Keep `train` and encoding without the new option working as before.
 
 ### Finding chunks
 
-Use this case-sensitive pattern from
-[`tiktoken`](https://github.com/openai/tiktoken/blob/main/tiktoken_ext/openai_public.py):
+Use this case-sensitive pattern from [`tiktoken`](https://github.com/openai/tiktoken/blob/main/tiktoken_ext/openai_public.py):
 
 ```text
 '(?:[sdmt]|ll|ve|re)| ?\p{L}++| ?\p{N}++| ?[^\s\p{L}\p{N}]++|\s++$|\s+(?!\S)|\s
 ```
 
-Collect the complete regex matches in order. Each match is a chunk to encode.
-The matches are the text you keep.
+Collect the complete regex matches in order. Each match is a chunk to encode, so the matches are the text you keep.
 
-The alternatives match lowercase contractions, runs of letters, runs of
-numbers, punctuation, and whitespace. Here, `\p{L}` means Unicode letters,
-`\p{N}` means Unicode numbers, and `\s` means whitespace. The optional space
-before letters, numbers, and punctuation is one ordinary space, U+0020.
-Use the full expression so its whitespace alternatives stay intact.
+The alternatives match lowercase contractions, runs of letters, runs of numbers, punctuation, and whitespace. Here, `\p{L}` means Unicode letters, `\p{N}` means Unicode numbers, and `\s` means whitespace. The optional space before letters, numbers, and punctuation is one ordinary space, U+0020.
 
 For example, `Hello world's 123!!` produces five chunks:
 
@@ -43,27 +26,26 @@ For example, `Hello world's 123!!` produces five chunks:
 "Hello"  " world"  "'s"  " 123"  "!!"
 ```
 
-Convert each chunk to UTF-8 bytes and apply your existing rank-based encoding
-to it. Concatenate the resulting ID lists into one flat list. With
-`[[108, 108], [111, 32]]` as the merges, `ll` inside `Hello` becomes ID 256.
-The `o` and the following space are in different chunks, so their pair cannot
-merge.
+Convert each chunk to UTF-8 bytes and apply your existing rank-based encoding to it. Concatenate the resulting ID lists into one flat list. With `[[108, 108], [111, 32]]` as the merges, `ll` inside `Hello` becomes ID 256. The `o` and the following space are in different chunks, so their pair cannot merge.
 
 ### Boundaries to preserve
 
-- The apostrophe is U+0027. Lowercase contractions include `'s`, `'d`, `'m`,
-  `'t`, `'ll`, `'ve`, and `'re`. Thus `don't` splits into `don` and `'t`,
-  while `DON'T` splits into `DON`, `'`, and `T`.
-- A non-breaking space, U+00A0, is handled by the whitespace alternatives.
-  Between `foo` and `bar`, one non-breaking space forms a separate chunk.
-  Whitespace runs can form larger chunks, so follow the complete pattern.
-- Unicode marks are outside `\p{L}`. The vowel signs in `हिंदी` are marks,
-  so that input splits into `ह`, `िं`, `द`, and `ी`.
+- The apostrophe is U+0027. Lowercase contractions include `'s`, `'d`, `'m`, `'t`, `'ll`, `'ve`, and `'re`. Thus `don't` splits into `don` and `'t`, while `DON'T` splits into `DON`, `'`, and `T`.
+- A non-breaking space, U+00A0, is handled by the whitespace alternatives. Between `foo` and `bar`, one non-breaking space forms a separate chunk. Whitespace runs can form larger chunks, so follow the complete pattern.
+- Unicode marks are outside `\p{L}`. The vowel signs in `हिंदी` are marks, so that input splits into `ह`, `िं`, `द`, and `ी`.
+
+<details>
+  <summary>Your progress: enforcing chunk boundaries</summary>
+
+With the same five learned rules, `to the top of the tree` now encodes to 13 IDs instead of 11. One rule previously joined ` the` to ` t` at the start of the next word. Those pieces now belong to different chunks, so that rule cannot apply.
+
+The extra IDs are expected. These rules were learned from the sentence without chunk boundaries. Later stages use GPT-2's vocabulary, whose merges were learned with its boundaries.
+
+</details>
 
 ### Tests
 
-The tester will write `Hello world's 123!!` to `text.txt` and
-`[[108, 108], [111, 32]]` to `merges.json`, then run:
+The tester will write `Hello world's 123!!` to `text.txt` and `[[108, 108], [111, 32]]` to `merges.json`, then run:
 
 ```bash
 $ ./your_program.sh encode text.txt --merges merges.json --pretokenize gpt2
@@ -78,9 +60,7 @@ Your program must print the concatenated token IDs:
 ]
 ```
 
-The five chunks produce 18 IDs with this small merge list. The tester also
-checks uppercase and lowercase contractions, Hindi text, non-breaking spaces,
-and the sentence from the progress note below.
+The five chunks produce 18 IDs with this small merge list. The tester also checks uppercase and lowercase contractions, Hindi text, non-breaking spaces, and the sentence from the progress note.
 
 ### Notes
 
@@ -135,17 +115,3 @@ and the sentence from the progress note below.
   Without `PCRE2_UCP`, `\s` doesn't match a non-breaking space.
 
 {{/lang_is_cpp}}
-
-<details>
-  <summary>Your progress: enforcing chunk boundaries</summary>
-
-With the same five learned rules, `to the top of the tree` now encodes to 13
-IDs instead of 11. One rule previously joined ` the` to ` t` at the start
-of the next word. Those pieces now belong to different chunks, so that rule
-cannot apply.
-
-The extra IDs are expected. These rules were learned from the sentence
-without chunk boundaries. The next stage uses GPT-2's vocabulary, whose merges
-were learned with its boundaries.
-
-</details>
