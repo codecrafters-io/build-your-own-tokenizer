@@ -1,130 +1,67 @@
-In this stage, you'll implement the `decode` command to turn token ids back into
-text.
+In this stage, you'll implement `decode` to turn token IDs back into text.
+Your encoder already replaces byte sequences with IDs. The decoder will use
+the same merge definitions to recover those bytes, then read them as UTF-8.
 
-### Your progress
+### Rebuilding the bytes
 
-<details>
-  <summary>Back to the original text for the example sentence `to the top of the tree`</summary>
+Read the IDs from `ids.json` and the learned pairs from `merges.json`.
+Reconstruct the vocabulary in merge order:
 
-Here's how many tokens the sentence `to the top of the tree` takes so far:
+1. Each ID from 0 through 255 represents the single byte with that value.
+2. For merge `i`, join the bytes of its two IDs. Assign that byte sequence to
+   ID `256 + i`.
+3. Join the byte sequences for all the requested IDs, in input order.
+4. Decode the combined buffer as UTF-8, replacing invalid sequences with the
+   replacement character `�`, also named U+FFFD.
 
-```text
-bytes     ██████████████████████  22 tokens
-encode    ███████████             11 tokens
-decode    ██████████████████████  22 bytes, the original text   ← this stage
-GPT-2     ██████                   6 tokens   ← the goal
-```
+For example, with `[[97, 97], [256, 97], [257, 98]]`, ID 256 represents `aa`,
+257 represents `aaa`, and 258 represents `aaab`. The input `[258, 100]`
+therefore decodes to `aaabd`.
 
-Decoding those 11 ids with the same five merges gives the sentence back.
+### Join bytes before decoding
 
-</details>
+A token can end partway through a UTF-8 character. Suppose the merge list is
+`[[240, 159], [145, 139]]`. ID 256 holds the first two bytes of `👋`, and ID
+257 holds the last two.
 
-### Why decode?
+Decoding either token's bytes separately loses the character. Joining the bytes
+for `[256, 257]` first gives `[240, 159, 145, 139]`, which decodes to `👋`.
 
-A language model writes its answer as token ids. Decode turns those ids back
-into text.
+Some inputs deliberately contain invalid UTF-8. The command must keep running
+and replace those sequences:
 
-👋 is four UTF-8 bytes, `[240, 159, 145, 139]`. GPT-2 splits them across two
-tokens, `[41840, 233]`, ids from its own vocabulary. Token boundaries don't have to line up with character
-boundaries: the first token holds `[240, 159, 145]` and the second holds
-`[139]`. UTF-8 needs all four bytes to make 👋, so decoding the first token by
-itself gives the replacement character `�`. Join the bytes from both tokens
-first, and the result is 👋.
+| Bytes | Decoded text as JSON | Reason |
+| --- | --- | --- |
+| `[240, 159]` | `"\uFFFD"` | An incomplete four-byte character becomes one replacement character. |
+| `[255, 255]` | `"\uFFFD\uFFFD"` | Each 255 is an invalid start byte and gets its own replacement character. |
+| `[240, 240]` | `"\uFFFD\uFFFD"` | The second 240 cannot continue the first character. Each starts an incomplete sequence. |
 
-Your decoder does the same with any text. Complete characters come back as
-themselves. Bytes that stop halfway through a character come back as `�`.
-
-### The `decode` command
-
-The `decode` command parses two JSON files in the formats from earlier stages:
-`ids.json` is an array of ids, and `merges.json` is an array of pairs.
-
-1. Build the same vocabulary training would. Id `n` below 256 is the single byte
-   `n`. Id `256 + i` is the bytes of the first id in merge `i`, followed by the
-   bytes of the second.
-2. Join every token's bytes into one buffer.
-3. Decode that buffer as UTF-8. Wherever the bytes are invalid, use the
-   replacement character U+FFFD.
-
-For example, `[258, 100]` with the three merges from `aaabdaaabac` prints:
-
-```json
-"aaabd"
-```
-
-`258` expands to `257` and `98`, then to `256`, `97`, and `98`, and finally to
-the bytes of `aaab`. `100` is `d`.
-
-`[240, 159, 145, 139]` prints the wave emoji.
-
-### How many replacement characters?
-
-U+FFFD, shown as `�`, is a replacement _character_, not a replacement byte. One
-`�` can stand for several bytes. Read the buffer left to right, one character at
-a time:
-
-- The first byte says how long the character is. 0–127 is a 1-byte character,
-  194–223 starts a 2-byte one, 224–239 a 3-byte one, and 240–244 a 4-byte one.
-- Every byte after the first must be a continuation byte, 128–191.
-- If the character is complete, output it. If a byte doesn't fit, or the buffer
-  ends first, output one `�` for the bytes read so far and start the next
-  character at the byte that didn't fit.
-- A byte that can't start a character, like 255 or a stray continuation byte,
-  is one `�` by itself.
-
-| Bytes        | Prints           | Why                                                                                                                                 |
-| ------------ | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `[240, 159]` | `"\uFFFD"`       | 240 starts a 4-byte character and 159 continues it. The buffer ends first, so both bytes are one `�`.                               |
-| `[255, 255]` | `"\uFFFD\uFFFD"` | 255 never starts a character, so each 255 is its own `�`.                                                                           |
-| `[240, 240]` | `"\uFFFD\uFFFD"` | The second 240 doesn't continue the first, so the first 240 is one `�`. The buffer ends after the second 240, so it is another `�`. |
-
-<details>
-  <summary>The exact rule</summary>
-
-For invalid input, the tests in this stage only use cut-off characters and
-bytes that never appear in UTF-8, so the rule above is enough. UTF-8 also limits the second byte after
-four lead bytes, which rules out overlong encodings, surrogates, and values
-above U+10FFFF:
-
-| First byte | Length | Second byte |
-| ---------- | ------ | ----------- |
-| 224        | 3      | 160–191     |
-| 237        | 3      | 128–159     |
-| 240        | 4      | 144–191     |
-| 244        | 4      | 128–143     |
-
-A second byte outside its range doesn't fit, just like any other byte that
-doesn't continue a character. This is the Unicode Standard's
-[maximal subpart rule](https://www.unicode.org/versions/Unicode16.0.0/core-spec/chapter-3/#G66453).
-The built-in decoders in Python, Rust, and TypeScript follow it exactly. Java's
-differs only on surrogates, which these tests don't use.
-
-</details>
+A replacement character can stand for several bytes. Its Unicode name,
+U+FFFD, identifies the character to insert. It is separate from the token IDs
+in your input.
 
 ### Tests
 
 The tester will write `[258, 100]` to `ids.json` and
-`[[97, 97], [256, 97], [257, 98]]` to `merges.json`, then execute your program
-like this:
+`[[97, 97], [256, 97], [257, 98]]` to `merges.json`, then run:
 
 ```bash
 $ ./your_program.sh decode ids.json --merges merges.json
 ```
 
-Your program must print the text as a JSON string:
+Your program must print the decoded text as one JSON string:
 
 ```json
 "aaabd"
 ```
 
-The tester will also run your program on a few other lists, including the full
-wave emoji, half of the wave emoji, bytes that are never valid UTF-8, and the
-ids of the sentence from "Your progress".
+The tester also checks an emoji split across tokens, an incomplete emoji,
+invalid bytes, and text containing quotes, backslashes, and newlines. Serialize
+the result with your JSON library so those characters are escaped correctly.
+The JSON strings `"\uFFFD"` and `"�"` have the same value, so either form
+passes.
 
 ### Notes
-
-- Join every token's bytes before decoding. The half-emoji is one replacement
-  character. The program should keep running when the bytes are not valid UTF-8.
 
 {{#lang_is_python}}
 
@@ -170,6 +107,49 @@ ids of the sentence from "Your progress".
 
 {{/lang_is_cpp}}
 
-- Print the text with your JSON library, so quotes, backslashes, and newlines
-  are escaped correctly. `"\uFFFD"` and `"�"` are the same JSON string, so
-  either passes.
+### How many replacement characters?
+
+<details>
+  <summary>Rules for a custom UTF-8 decoder</summary>
+
+The decoder reads the combined buffer from left to right:
+
+- A byte from 0 through 127 is a complete one-byte character. Bytes 194–223
+  start a two-byte character, 224–239 start a three-byte character, and 240–244
+  start a four-byte character.
+- Subsequent bytes must be continuation bytes, 128–191, with the extra
+  second-byte limits below.
+- When a character is complete, output it. If the next byte doesn't fit, or
+  the buffer ends first, output one `�` for the valid prefix consumed so far.
+  Resume at the byte that didn't fit.
+- A byte that can't start a character, such as 255 or a stray continuation
+  byte, becomes one `�` by itself.
+
+Four starting bytes have narrower second-byte ranges:
+
+| First byte | Length | Second byte |
+| --- | --- | --- |
+| 224 | 3 | 160–191 |
+| 237 | 3 | 128–159 |
+| 240 | 4 | 144–191 |
+| 244 | 4 | 128–143 |
+
+These limits exclude overlong encodings, surrogate values, and values above
+U+10FFFF. A second byte outside its range is handled as a byte that doesn't
+fit. This is the Unicode Standard's
+[maximal subpart rule](https://www.unicode.org/versions/Unicode16.0.0/core-spec/chapter-3/#G66453).
+
+The stage's invalid-input tests use truncated characters and bytes that cannot
+appear in valid UTF-8. Java's built-in decoder differs on surrogate encodings,
+which these tests do not use.
+
+</details>
+
+<details>
+  <summary>Your progress: recovering the original sentence</summary>
+
+The 11 IDs from the previous stage, decoded with the same five merge rules,
+produce the JSON string `"to the top of the tree"`. Encoding shortened the
+sequence of IDs while keeping the original 22 bytes recoverable.
+
+</details>

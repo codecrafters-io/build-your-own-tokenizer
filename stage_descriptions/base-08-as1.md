@@ -1,91 +1,83 @@
-In this stage, you'll implement the `--vocab` option to produce GPT-2's exact
-token ids from its vocabulary files.
+In this stage, you'll add `--vocab` to `encode` so it can use GPT-2's
+vocabulary files. Your encoder already splits text like GPT-2 and applies
+ranked merges within each chunk. Loading its vocabulary will let you produce
+the same token IDs.
 
-### Your progress
+### A vocabulary with its own IDs
 
-<details>
-  <summary>6 tokens for the example sentence `to the top of the tree`</summary>
+Earlier stages used byte values as the first 256 token IDs, then assigned
+256, 257, and so on to learned merges. GPT-2 has its own ID for every token.
+For example, its ID for a space is 220, even though the space byte is 32.
 
-Here's how many tokens the sentence `to the top of the tree` takes so far:
+The `--vocab` argument names a directory containing `vocab.json` and
+`merges.txt`. This mode automatically uses GPT-2 pre-tokenization. It does
+not require `--merges` or `--pretokenize gpt2` on the command line.
 
-```text
-bytes     ██████████████████████  22 tokens
-split     █████████████           13 tokens
-GPT-2     ██████                   6 tokens   ← this stage
-```
+The tester supplies both files. You don't need model weights, an API key, or a
+download during execution. Your existing `--merges` mode continues to use the
+JSON format from earlier stages.
 
-The sentence splits into 6 chunks, and GPT-2's vocabulary has one token for
-each of them.
+### How the files represent bytes
 
-</details>
+GPT-2's files spell tokens using printable characters that stand for bytes.
+These characters are a storage representation. A space in the input, for
+example, is written as `Ġ` in a token's vocabulary spelling.
 
-### Matching GPT-2
+Build the byte-to-character mapping as follows:
 
-Your encoder already splits text like GPT-2. The last piece is GPT-2's own
-vocabulary: its 50,000 merges and the id of every token. With those, the text
-`Hello world` encodes as:
+- Byte values 33–126, 161–172, and 174–255 map to the Unicode character with
+  the same numeric value.
+- Visit the remaining 68 byte values in increasing order. Map them to the
+  characters U+0100, U+0101, and onward.
 
-```json
-[15496, 995]
-```
+The `U+` notation names a Unicode character by its hexadecimal number.
+U+0100 is character number 256. The first 33 remapped bytes are 0 through 32,
+so byte `n` in that range maps to U+0100 + `n`.
 
-The text ` Hello world`, with a leading space, encodes as:
+These examples distinguish the original byte, its spelling in the files, and
+its final token ID:
 
-```json
-[18435, 995]
-```
+| Original byte | Byte value | Stored as | ID in `vocab.json` |
+| --- | --- | --- | --- |
+| `!` | 33 | `!` | 0 |
+| `a` | 97 | `a` | 64 |
+| Tab | 9 | `ĉ` (U+0109) | 197 |
+| Newline | 10 | `Ċ` (U+010A) | 198 |
+| Space | 32 | `Ġ` (U+0120) | 220 |
 
-These are the same ids OpenAI's tokenizer produces, and you can watch GPT-2's
-quirks happen. The text `strawberry strawberry` encodes as:
+[`vocab.json`](https://huggingface.co/gpt2/resolve/main/vocab.json) maps
+token spellings to IDs, such as
+`{"!": 0, "Hello": 15496, "Ġworld": 995}`. Parse it as JSON so escapes such
+as `"\u0120"` become their actual characters.
 
-```json
-[301, 1831, 8396, 41236]
-```
+[`merges.txt`](https://huggingface.co/gpt2/resolve/main/merges.txt) lists
+pairs of token spellings in rank order. Skip blank lines and the initial
+`#version: 0.2` header. Each remaining line contains two spellings separated
+by one space. Keep real pairs such as `# #`, even though they start with `#`.
 
-The first `strawberry` has no space before it and splits into `st`, `raw`, and
-`berry`. The second one includes its space, and ` strawberry` is a single token.
+### Encoding with GPT-2's rules
 
-### GPT-2's files
+For each chunk from the previous stage's pattern:
 
-The `--vocab` flag names the directory that holds `vocab.json` and `merges.txt`.
-GPT-2's files store each byte as a printable character. Bytes 33–126, 161–172,
-and 174–255 are printable, so they map to themselves. The other 68 bytes, in
-increasing order, map to U+0100 and upward. The first 33 of them are bytes 0 to
-32, so a byte `n` below 33 is stored as U+0100 + `n`.
+1. Convert the chunk to UTF-8 bytes.
+2. Map each byte to its vocabulary spelling character.
+3. Choose the lowest-ranked pair present in the chunk, then concatenate its
+   two spellings at every non-overlapping occurrence from left to right.
+   Repeat until no ranked pair remains.
+4. Look up each resulting spelling in `vocab.json` to get its token ID.
 
-Check your table against these five bytes:
-
-| Byte    | Value | Stored as    | Id in `vocab.json` |
-| ------- | ----- | ------------ | ------------------ |
-| `!`     | 33    | `!`          | 0                  |
-| `a`     | 97    | `a`          | 64                 |
-| Tab     | 9     | `ĉ` (U+0109) | 197                |
-| Newline | 10    | `Ċ` (U+010A) | 198                |
-| Space   | 32    | `Ġ` (U+0120) | 220                |
-
-[`vocab.json`](https://huggingface.co/gpt2/resolve/main/vocab.json) is a JSON
-object that maps each token to its id, like
-`{"!": 0, "Hello": 15496, "Ġworld": 995}`. Parse it with your language's JSON
-library. Its keys use JSON escapes such as `"\u0120"` for `Ġ`, and the library
-turns them back into characters.
-
-[`merges.txt`](https://huggingface.co/gpt2/resolve/main/merges.txt) lists pairs
-in rank order, after a `#version` line.
-
-Split the text with the same pattern as earlier stages. For each chunk, map its
-UTF-8 bytes to characters, merge the characters using the ranks in `merges.txt`,
-and look up each piece in `vocab.json`:
+Combine the IDs from all chunks into one output list. For the chunk
+` Hello`, the transformations are:
 
 ```text
-" Hello" → bytes 32 72 101 108 108 111
-         → characters Ġ H e l l o
-         → merged by rank into ĠHello
-         → vocab.json id 18435
+" Hello" -> bytes 32 72 101 108 108 111
+         -> characters Ġ H e l l o
+         -> merged spelling ĠHello
+         -> vocab.json ID 18435
 ```
 
-Splitting first still matters. In `Hello\n\nworld`, the two newlines are
-separate chunks, so they stay two newline tokens instead of becoming GPT-2's
-double-newline token, 628:
+Keep the chunk boundaries. In `Hello\n\nworld`, where `\n` denotes a newline,
+the two interior newlines are separate chunks. Their IDs remain separate:
 
 ```json
 [15496, 198, 198, 6894]
@@ -93,32 +85,53 @@ double-newline token, 628:
 
 ### Tests
 
-The tester will write `Hello world` to `text.txt`, put GPT-2's `vocab.json` and
-`merges.txt` in a `gpt2` directory, and execute your program like this:
+The tester will write `Hello world` to `text.txt`, place GPT-2's two files in
+the `gpt2` directory, and run:
 
 ```bash
 $ ./your_program.sh encode text.txt --vocab gpt2
 ```
 
-Your program must print the token ids as a JSON array:
+Your program must print:
 
 ```json
 [15496, 995]
 ```
 
-When a short text passes, the tester's log shows the piece of text behind each
-id, like `"Hello" " world"`. When one fails, it shows the expected pieces next
-to yours.
+Those IDs represent `Hello` and ` world`. When a short text passes, the
+tester shows the text pieces behind the IDs. When one fails, it compares the
+expected pieces with yours.
 
-The tester will also run your program on a few other files, including
-`strawberry strawberry`, a Hindi sentence, a short program with indented lines,
-and the sentence from "Your progress".
+The tester also checks Hindi text, indented code, blank lines, and
+`strawberry strawberry`. For that last input, the expected result is:
 
-### Notes
+```json
+[301, 1831, 8396, 41236]
+```
 
-- In `merges.txt`, skip blank lines and only the first line, `#version: 0.2`.
-  Real merges such as `# #` also start with `#`. Split each remaining line on a
-  single space.
-- None of the hidden texts contain `<|endoftext|>`.
-- Ids from earlier stages are byte values. Here, look every token up in
-  `vocab.json`. If a lookup fails, check your byte-to-character table.
+The first word becomes `st`, `raw`, and `berry`. The second word, including
+its leading space, is the single token ` strawberry`. The vocabulary now
+lets you reproduce that difference.
+
+The test texts exclude the special token `<|endoftext|>`. This stage adds
+GPT-2 encoding. Training GPT-2's vocabulary and decoding its IDs are outside
+the current task.
+
+If a vocabulary lookup fails, check the byte-to-character table first. A
+spelling that doesn't match `vocab.json` usually means a byte was mapped to the
+wrong character.
+
+<details>
+  <summary>Your progress: matching GPT-2 on the example sentence</summary>
+
+With GPT-2's vocabulary, `to the top of the tree` produces:
+
+```json
+[1462, 262, 1353, 286, 262, 5509]
+```
+
+Its six tokens are `to`, ` the`, ` top`, ` of`, ` the`, and ` tree`.
+You started with 22 byte IDs and can now encode the sentence with GPT-2's
+own vocabulary.
+
+</details>

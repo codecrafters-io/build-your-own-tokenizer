@@ -1,87 +1,62 @@
-In this stage, you'll implement the `merge` command to combine a pair of tokens
-into a new token.
+In this stage, you'll implement `merge` to replace a selected pair with one
+new token ID. Your `top-pair` command chooses which pair to combine. This
+command performs the replacement, reducing the number of IDs needed to
+represent the same bytes.
 
-### Your progress
+### Giving a pair its own ID
 
-<details>
-  <summary>22 → 18 tokens for the example sentence `to the top of the tree`</summary>
+A vocabulary associates each token ID with the bytes it represents. So far,
+IDs 0 through 255 each represent one byte. The first available ID for a
+larger token is 256.
 
-Here's how many tokens the sentence `to the top of the tree` takes so far:
+This command makes one kind of replacement, so it always uses 256 as the new
+ID. For example, merging `(97, 97)` creates a token representing the two bytes
+of `aa`. Later stages will learn several merges and assign each one its own
+ID.
 
-```text
-bytes     ██████████████████████  22 tokens
-merge     ██████████████████      18 tokens   ← this stage
-GPT-2     ██████                   6 tokens   ← the goal
-```
+Read the JSON array from `ids.json`. The `--pair` argument supplies two
+integers separated by a comma, with no spaces. Replace every occurrence of
+that ordered pair while scanning the original list from left to right. Copy
+unmatched IDs unchanged.
 
-</details>
+### Overlapping matches
 
-### Why merge?
-
-Merging is how GPT-2 grew its vocabulary. In GPT-2's training text, the most
-common pair of bytes was a space (byte 32) followed by `t` (byte 116), the start
-of words like `the`, `to`, and `that`. GPT-2 merged that pair first and gave it
-the new id 256.
-
-After that merge, every `the`, `to`, and `that` with a space before it takes one
-token fewer. A word at the very start of a text has no space before it, so its
-`t` stays a separate token. In `to the top of the tree`, 4 of the 5 words that
-start with `t` follow a space, so the sentence drops from 22 tokens to 18.
-
-32 and 116 are byte values. GPT-2's vocabulary numbers single bytes in its own
-order, so its ids for a space and `t` are 220 and 83. Later stages convert
-between the two.
-
-### The `merge` command
-
-A merge gives a pair of ids its own new id. Byte ids go from 0 to 255, so the
-first free id is 256. This stage makes one merge, so its new id is always 256.
-Later stages combine this with `top-pair` to train a tokenizer, and give each
-new merge the next id: 257, 258, and so on.
-
-Like `top-pair`, the `merge` command parses `ids.json` as a JSON array of
-integers. It reads the ids from left to right. Each time it finds the pair given
-by `--pair`, it replaces those two ids with the new id.
-
-For example, in `[1, 2, 3, 1, 2]`, the pair `(1, 2)` appears twice. Replacing it
-with `256` gives:
-
-```json
-[256, 3, 256]
-```
-
-Matches can't overlap. In `[97, 97, 97]`, reading from the left, the first two
-ids match `(97, 97)` and become `256`. The third `97` has nothing left to pair
-with, so it stays:
+Each input ID can be used only once during a merge. Given `[97, 97, 97]` and
+the pair `(97, 97)`, combine the first two IDs. The third has no partner left,
+so the result is:
 
 ```json
 [256, 97]
 ```
 
-This is different from counting. `top-pair` counts `(97, 97)` twice in this
-list, but a merge can't use the middle `97` twice.
+Your `top-pair` command counts two overlapping pairs in this input. Replacing
+both would reuse the middle ID and change the represented text.
+
+Continue scanning after the IDs you consumed. A newly emitted 256 is part of
+the output and does not participate in another replacement during this pass.
 
 ### Tests
 
-The tester will write `[1, 2, 3, 1, 2]` to `ids.json` and execute your program
-like this:
+The tester will write `[1, 2, 3, 1, 2]` to `ids.json` and run:
 
 ```bash
 $ ./your_program.sh merge ids.json --pair 1,2
 ```
 
-Your program must print the merged ids as a JSON array:
+Your program must print the resulting IDs as a JSON array:
 
 ```json
 [256, 3, 256]
 ```
 
-The tester will also run your program on a few other lists, including
-overlapping matches, a pair that never appears, the ids of `aaabdaaabac`, and
-the bytes of the sentence from "Your progress".
+The tester also checks overlapping matches, ordered pairs, and a pair that
+doesn't occur. When the pair is absent, print the original list unchanged.
 
-### Notes
+<details>
+  <summary>Your progress: one merge shortens a sentence</summary>
 
-- `--pair` is two integers separated by a comma, with no spaces.
-- Order matters. `--pair 1,2` matches `1` followed by `2`, never `2` followed by
-  `1`.
+The sentence `to the top of the tree` contains 22 bytes, with no trailing
+newline. Merging `(32, 116)`, a space followed by `t`, replaces four pairs
+with four new tokens. The result has 18 IDs and still represents all 22 bytes.
+
+</details>

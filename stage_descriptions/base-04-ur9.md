@@ -1,87 +1,53 @@
-In this stage, you'll implement the `train` command to learn which pairs to
-merge from a text file.
+In this stage, you'll implement `train` to learn a reusable list of merge
+rules from a text file. Your existing commands can choose a pair and replace
+it. Repeating those operations will build a vocabulary that your encoder can
+later apply to new text.
 
-### Your progress
+### Learning a vocabulary
 
-<details>
-  <summary>22 → 11 tokens for the example sentence `to the top of the tree`</summary>
+The sample text used for training is called a corpus. Start with its UTF-8
+bytes, then repeatedly combine the most frequent neighboring pair into a new
+token. This is the training step of byte-pair encoding, or BPE.
 
-Here's how many tokens the sentence `to the top of the tree` takes so far:
+Each round adds one token to the vocabulary. Record its pair so you can apply
+the same rule again when encoding other text. This trains the tokenizer's
+vocabulary. No language model or model weights are involved.
 
-```text
-bytes     ██████████████████████  22 tokens
-train     ███████████             11 tokens   ← this stage
-GPT-2     ██████                   6 tokens   ← the goal
-```
+### The training loop
 
-The 11 comes from five merges learned from the sentence itself, with
-`--num-merges 5`. After the fifth merge, the sentence is 11 tokens long.
+Read the corpus and begin with one ID per UTF-8 byte. Repeat these steps
+`--num-merges` times:
 
-</details>
+1. Count neighboring pairs in the current ID list, including overlaps.
+2. Choose the most frequent pair. Break ties by its first occurrence, as in
+   `top-pair`.
+3. Replace every non-overlapping occurrence from left to right, as in `merge`.
+   Use a fresh ID for each round: 256, then 257, then 258, and so on.
+4. Append the selected pair to the list of learned merges.
 
-### How GPT-2 learned its merges
+Recount after every round because the replacement changes the pairs that are
+present. Keep going even when the most frequent pair appears only once.
 
-GPT-2's tokenizer comes from repeating the steps of earlier stages: find the
-most frequent pair, merge it, and repeat. GPT-2 did this 50,000 times on its
-training text. Its first six merges were:
+For `aaabdaaabac` with `--num-merges 3`, the rounds are:
 
-| New id | Pair         | Token |
-| ------ | ------------ | ----- |
-| 256    | `(32, 116)`  | `␠t`  |
-| 257    | `(32, 97)`   | `␠a`  |
-| 258    | `(104, 101)` | `he`  |
-| 259    | `(105, 110)` | `in`  |
-| 260    | `(114, 101)` | `re`  |
-| 261    | `(111, 110)` | `on`  |
+| Round | IDs before the merge | Selected pair | New ID |
+| --- | --- | --- | --- |
+| 1 | `[97, 97, 97, 98, 100, 97, 97, 97, 98, 97, 99]` | `(97, 97)`, four occurrences | 256 |
+| 2 | `[256, 97, 98, 100, 256, 97, 98, 97, 99]` | `(256, 97)`, tied with `(97, 98)` and first in the list | 257 |
+| 3 | `[257, 98, 100, 257, 98, 97, 99]` | `(257, 98)`, two occurrences | 258 |
 
-`␠` marks a space, byte 32. Later merges build on earlier ones. Merge 262
-combines `␠t` and `he` into `␠the`. This loop is called byte-pair encoding, or
-BPE.
-
-### The `train` command
-
-The `train` command reads text from a file and runs the loop as many times as
-`--num-merges` asks:
-
-1. Convert the text into UTF-8 bytes.
-2. Find the most frequent pair. On a tie, the pair that appears first, reading
-   left to right, wins.
-3. Replace that pair with the next new id. The first merge creates 256, the
-   second creates 257, and so on.
-4. Repeat steps 2 and 3 on the new list until you have done `--num-merges`
-   merges. Keep going even when the most frequent pair appears only once.
-
-For example, here's `aaabdaaabac` with `--num-merges 3`:
-
-| Round | Ids                                             | Most frequent pair                          | New id |
-| ----- | ----------------------------------------------- | ------------------------------------------- | ------ |
-| 1     | `[97, 97, 97, 98, 100, 97, 97, 97, 98, 97, 99]` | `(97, 97)`, 4 times                         | 256    |
-| 2     | `[256, 97, 98, 100, 256, 97, 98, 97, 99]`       | `(256, 97)`, tied with `(97, 98)` and first | 257    |
-| 3     | `[257, 98, 100, 257, 98, 97, 99]`               | `(257, 98)`, 2 times                        | 258    |
-
-The command prints the merged pairs in order:
-
-```json
-[
-  [97, 97],
-  [256, 97],
-  [257, 98]
-]
-```
-
-The tester parses your output as JSON, so spacing and line breaks are up to you.
-`[[97,97],[256,97],[257,98]]` on one line passes too.
+One round can replace several occurrences. The requested merge count is the
+number of rounds, so this example learns three rules.
 
 ### Tests
 
-The tester will write `aaabdaaabac` to `corpus.txt` and execute your program
-like this:
+The tester will write `aaabdaaabac` to `corpus.txt` and run:
 
 ```bash
 $ ./your_program.sh train corpus.txt --num-merges 3
 ```
 
-Your program must print the merged pairs as a JSON array:
+Your program must print the selected pairs in the order they were learned:
 
 ```json
 [
@@ -91,11 +57,26 @@ Your program must print the merged pairs as a JSON array:
 ]
 ```
 
-The tester will also ask for 6, 10, and 50 merges, including on a corpus with
-spaces and newlines, and for 5 merges on the sentence from "Your progress".
+The pair at index `i`, counting from zero, defines token ID `256 + i`.
+For example, the second pair defines ID 257 and uses the previously created
+ID 256. Print only this list of pairs. The final encoded corpus and pair
+counts are excluded from the output.
 
-### Notes
+The tester also requests 6, 10, and 50 rounds on other inputs, including text
+with spaces, newlines, and multibyte characters. It never requests more rounds
+than the corpus allows.
 
-- Print only the pairs, in the order you merged them. A pair's position gives
-  its id, so the list needs no ids.
-- The tester never asks for more merges than the text allows.
+<details>
+  <summary>Your progress: learning five rules from a sentence</summary>
+
+Training on `to the top of the tree` with `--num-merges 5` learns:
+
+```json
+[[32, 116], [256, 104], [257, 101], [258, 256], [116, 111]]
+```
+
+After those five rounds, the sentence has 11 IDs instead of its original 22.
+The command prints the five rules. The next stage will use them to produce
+encoded text.
+
+</details>
