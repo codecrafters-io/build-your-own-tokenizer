@@ -1,16 +1,20 @@
-In this stage, you'll implement the first step of a tokenizer, a `bytes` command
-that converts text into UTF-8 bytes.
+In this stage, you'll implement a `bytes` command that reads a file and prints
+its UTF-8 bytes. These bytes are the starting tokens for the tokenizer you'll
+build.
 
 ### The `bytes` command
 
-A language model can't read text. It only reads numbers, called token IDs. A
-tokenizer turns the text into token IDs for the model.
+GPT-2 receives text as a sequence of numbers called token IDs. Each ID
+identifies a piece of text. A tokenizer converts text into this sequence.
 
-The first step of a tokenizer is to convert raw text into bytes.
+[UTF-8](https://www.rfc-editor.org/rfc/rfc3629) represents text as bytes, each
+with a value from 0 to 255. A character can occupy several bytes. Starting with
+all 256 byte values lets our tokenizer represent any UTF-8 text before it learns
+larger tokens.
 
-The `bytes` command reads a file and prints its
-[UTF-8](https://www.rfc-editor.org/rfc/rfc3629) bytes as a JSON array, one
-number per byte.
+The `bytes` command reads a file's bytes in order and prints them as a JSON
+array, one number per byte. At this stage, each byte's value is also its token
+ID.
 
 ```bash
 $ ./your_program.sh bytes text.txt
@@ -47,8 +51,7 @@ file, a file with only an emoji, and a file with several lines.
 - Spaces, newlines, and tabs are bytes too. Keep every one of them: a space is
   `32`, a newline is `10`, and a tab is `9`. An empty file has no bytes, so its
   output is `[]`.
-- Every byte is a number from 0 to 255. A larger number means you're printing
-  characters, not bytes.
+- Every output value must be between 0 and 255, inclusive.
 - The tester reads your output as JSON, so `[104,105]` and `[104, 105]` both
   pass. Print only the JSON array to stdout, and send debug output to stderr,
   like the starter code's log line.
