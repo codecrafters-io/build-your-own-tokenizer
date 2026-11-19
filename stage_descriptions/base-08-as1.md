@@ -1,12 +1,12 @@
 In this stage, you'll implement the `--vocab` option to produce GPT-2's exact
-token ids from its vocabulary files.
+token IDs from its vocabulary files.
 
 ### Your progress
 
 <details>
   <summary>6 tokens for the example sentence `to the top of the tree`</summary>
 
-Here's how many tokens the sentence `to the top of the tree` takes so far:
+Here's the running comparison for `to the top of the tree`:
 
 ```text
 bytes     ██████████████████████  22 tokens
@@ -14,15 +14,15 @@ split     █████████████           13 tokens
 GPT-2     ██████                   6 tokens   ← this stage
 ```
 
-The sentence splits into 6 chunks, and GPT-2's vocabulary has one token for
-each of them.
+The sentence splits into 6 chunks, and GPT-2's vocabulary has one token for each
+of them.
 
 </details>
 
 ### Matching GPT-2
 
 Your encoder already splits text like GPT-2. The last piece is GPT-2's own
-vocabulary: its 50,000 merges and the id of every token. With those, the text
+vocabulary: its 50,000 merges and the ID of every token. With those, the text
 `Hello world` encodes as:
 
 ```json
@@ -35,8 +35,7 @@ The text ` Hello world`, with a leading space, encodes as:
 [18435, 995]
 ```
 
-These are the same ids OpenAI's tokenizer produces, and you can watch GPT-2's
-quirks happen. The text `strawberry strawberry` encodes as:
+The text `strawberry strawberry` encodes as:
 
 ```json
 [301, 1831, 8396, 41236]
@@ -55,7 +54,7 @@ increasing order, map to U+0100 and upward. The first 33 of them are bytes 0 to
 
 Check your table against these five bytes:
 
-| Byte    | Value | Stored as    | Id in `vocab.json` |
+| Byte    | Value | Stored as    | ID in `vocab.json` |
 | ------- | ----- | ------------ | ------------------ |
 | `!`     | 33    | `!`          | 0                  |
 | `a`     | 97    | `a`          | 64                 |
@@ -64,13 +63,22 @@ Check your table against these five bytes:
 | Space   | 32    | `Ġ` (U+0120) | 220                |
 
 [`vocab.json`](https://huggingface.co/gpt2/resolve/main/vocab.json) is a JSON
-object that maps each token to its id, like
-`{"!": 0, "Hello": 15496, "Ġworld": 995}`. Parse it with your language's JSON
-library. Its keys use JSON escapes such as `"\u0120"` for `Ġ`, and the library
-turns them back into characters.
+object that maps each token to its ID, like
+`{"!": 0, "Hello": 15496, "Ġworld": 995}`. Parse it with your JSON library. Its
+keys use JSON escapes such as `"\u0120"` for `Ġ`, and the library turns them
+back into characters.
 
 [`merges.txt`](https://huggingface.co/gpt2/resolve/main/merges.txt) lists pairs
-in rank order, after a `#version` line.
+in rank order, after a `#version` line. Its first two merges are:
+
+```text
+#version: 0.2
+Ġ t
+Ġ a
+```
+
+Each row concatenates two symbols, so the first merge produces `Ġt`. A row's
+position supplies its rank, and the merged symbol's ID comes from `vocab.json`.
 
 Split the text with the same pattern as earlier stages. For each chunk, map its
 UTF-8 bytes to characters, merge the characters using the ranks in `merges.txt`,
@@ -100,15 +108,18 @@ The tester will write `Hello world` to `text.txt`, put GPT-2's `vocab.json` and
 $ ./your_program.sh encode text.txt --vocab gpt2
 ```
 
-Your program must print the token ids as a JSON array:
+The `--vocab` option includes GPT-2 pretokenization, so this command needs no
+`--pretokenize` or `--merges` flag.
+
+Your program must print the token IDs as a JSON array:
 
 ```json
 [15496, 995]
 ```
 
-When a short text passes, the tester's log shows the piece of text behind each
-id, like `"Hello" " world"`. When one fails, it shows the expected pieces next
-to yours.
+For outputs with 1–16 valid token IDs, the tester can show the text behind each
+ID, like `"Hello" " world"`. On a mismatch, it also shows the expected pieces
+where it can.
 
 The tester will also run your program on a few other files, including
 `strawberry strawberry`, a Hindi sentence, a short program with indented lines,
@@ -120,5 +131,7 @@ and the sentence from "Your progress".
   Real merges such as `# #` also start with `#`. Split each remaining line on a
   single space.
 - None of the hidden texts contain `<|endoftext|>`.
-- Ids from earlier stages are byte values. Here, look every token up in
-  `vocab.json`. If a lookup fails, check your byte-to-character table.
+- Earlier stages use IDs 0–255 for individual bytes and IDs 256 and above for
+  learned tokens. Here, look every token up in `vocab.json`, including tokens
+  containing a single byte. If a lookup fails, check your byte-to-character
+  table.
