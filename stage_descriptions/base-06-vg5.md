@@ -98,8 +98,7 @@ progress".
 
 - Join every token's bytes before decoding. The half-emoji is one replacement
   character. The program should keep running when the bytes are not valid UTF-8.
-
-- This stage's invalid inputs are cut-off characters and bytes that never appear
+  This stage's invalid inputs are cut-off characters and bytes that never appear
   in UTF-8. The Unicode Standard's
   [maximal subpart rule](https://www.unicode.org/versions/Unicode16.0.0/core-spec/chapter-3/#G66453)
   covers the rest, including overlong encodings, surrogate values, and values
