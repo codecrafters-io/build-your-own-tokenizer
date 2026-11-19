@@ -51,7 +51,8 @@ file, a file with only an emoji, and a file with several lines.
 - Spaces, newlines, and tabs are bytes too. Keep every one of them: a space is
   `32`, a newline is `10`, and a tab is `9`. An empty file has no bytes, so its
   output is `[]`.
-- Every output value must be between 0 and 255, inclusive.
+- Every output value must be between 0 and 255, inclusive. A larger number means
+  you're printing characters instead of bytes.
 - The tester reads your output as JSON, so `[104,105]` and `[104, 105]` both
   pass. Print only the JSON array to stdout, and send debug output to stderr,
   like the starter code's log line.
