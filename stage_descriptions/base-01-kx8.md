@@ -1,11 +1,11 @@
 In this stage, you'll implement a `bytes` command that reads a file and prints
-its UTF-8 bytes. These bytes are the starting tokens for the tokenizer you'll
-build.
+its UTF-8 bytes.
 
 ### The `bytes` command
 
 GPT-2 receives text as a sequence of numbers called token IDs. Each ID
-identifies a piece of text. A tokenizer converts text into this sequence.
+identifies a piece of text, and a tokenizer converts text into this sequence.
+These bytes are the starting tokens for the tokenizer you'll build.
 
 [UTF-8](https://www.rfc-editor.org/rfc/rfc3629) represents text as bytes, each
 with a value from 0 to 255. A character can occupy several bytes. Starting with

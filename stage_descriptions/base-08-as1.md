@@ -35,8 +35,7 @@ The text ` Hello world`, with a leading space, encodes as:
 [18435, 995]
 ```
 
-These are the same IDs OpenAI's tokenizer produces, and you can watch GPT-2's
-quirks happen. The text `strawberry strawberry` encodes as:
+The text `strawberry strawberry` encodes as:
 
 ```json
 [301, 1831, 8396, 41236]
@@ -78,9 +77,8 @@ in rank order, after a `#version` line. Its first two merges are:
 Ġ a
 ```
 
-Each row names two symbols to concatenate, so the first merge produces `Ġt`. A
-symbol can itself contain several characters after earlier merges. A row's
-position supplies its rank. The resulting symbol's ID comes from `vocab.json`.
+Each row concatenates two symbols, so the first merge produces `Ġt`. A row's
+position supplies its rank, and the merged symbol's ID comes from `vocab.json`.
 
 Split the text with the same pattern as earlier stages. For each chunk, map its
 UTF-8 bytes to characters, merge the characters using the ranks in `merges.txt`,
@@ -110,8 +108,8 @@ The tester will write `Hello world` to `text.txt`, put GPT-2's `vocab.json` and
 $ ./your_program.sh encode text.txt --vocab gpt2
 ```
 
-The `--vocab` option includes GPT-2 pretokenization. This command needs neither
-`--pretokenize gpt2` nor a separate `--merges` file.
+The `--vocab` option includes GPT-2 pretokenization, so this command needs no
+`--pretokenize` or `--merges` flag.
 
 Your program must print the token IDs as a JSON array:
 
@@ -119,9 +117,9 @@ Your program must print the token IDs as a JSON array:
 [15496, 995]
 ```
 
-For outputs with 1–16 token IDs, the tester can show the piece of text behind
-each ID, like `"Hello" " world"`. On a mismatch, it also attempts to show the
-expected and actual pieces. Invalid IDs cannot be displayed this way.
+For outputs with 1–16 valid token IDs, the tester can show the text behind each
+ID, like `"Hello" " world"`. On a mismatch, it also shows the expected pieces
+where it can.
 
 The tester will also run your program on a few other files, including
 `strawberry strawberry`, a Hindi sentence, a short program with indented lines,

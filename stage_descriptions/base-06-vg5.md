@@ -31,13 +31,12 @@ and the second holds `[139]`. UTF-8 needs all four bytes to make 👋, so decodi
 the first token by itself gives the replacement character `�`. Join the bytes
 from both tokens first, and the result is 👋.
 
-Your decoder does the same with any text. Complete characters come back as
-themselves. Bytes that stop halfway through a character come back as `�`.
+Complete characters come back as themselves, and bytes that stop halfway through
+a character come back as `�`.
 
 ### The `decode` command
 
-The `decode` command parses two JSON files in the formats from earlier stages:
-`ids.json` is an array of IDs, and `merges.json` is an array of pairs.
+The `decode` command reads `ids.json` and `merges.json` in the earlier formats.
 
 1. Build the same vocabulary training would. ID `n` below 256 is the single byte
    `n`. ID `256 + i` is the bytes of the first ID in merge `i`, followed by the
@@ -55,8 +54,6 @@ For example, `[258, 100]` with the three merges from `aaabdaaabac` prints:
 `258` expands to `257` and `98`, then to `256`, `97`, and `98`, and finally to
 the bytes of `aaab`. `100` is `d`.
 
-`[240, 159, 145, 139]` prints the wave emoji.
-
 ### How many replacement characters?
 
 Unicode identifies the replacement character `�` as U+FFFD. One `�` can stand
@@ -72,11 +69,10 @@ time:
 - A byte that can't start a character, like 255 or a stray continuation byte, is
   one `�` by itself.
 
-| Bytes        | Prints           | Why                                                                                                                                 |
-| ------------ | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `[240, 159]` | `"\uFFFD"`       | 240 starts a 4-byte character and 159 continues it. The buffer ends first, so both bytes are one `�`.                               |
-| `[255, 255]` | `"\uFFFD\uFFFD"` | 255 never starts a character, so each 255 is its own `�`.                                                                           |
-| `[240, 240]` | `"\uFFFD\uFFFD"` | The second 240 doesn't continue the first, so the first 240 is one `�`. The buffer ends after the second 240, so it is another `�`. |
+| Bytes        | Prints           | Why                                                                                                   |
+| ------------ | ---------------- | ----------------------------------------------------------------------------------------------------- |
+| `[240, 159]` | `"\uFFFD"`       | 240 starts a 4-byte character and 159 continues it. The buffer ends first, so both bytes are one `�`. |
+| `[255, 255]` | `"\uFFFD\uFFFD"` | 255 never starts a character, so each 255 is its own `�`.                                             |
 
 ### Tests
 
@@ -94,39 +90,20 @@ Your program must print the text as a JSON string:
 "aaabd"
 ```
 
-The tester will also run your program on a few other lists, including the full
-wave emoji, half of the wave emoji, bytes that are never valid UTF-8, and the
-IDs of the sentence from "Your progress".
+The tester will also run your program on other lists, including the full and
+half wave emoji, bytes that are never valid UTF-8, and the sentence from "Your
+progress".
 
 ### Notes
 
 - Join every token's bytes before decoding. The half-emoji is one replacement
   character. The program should keep running when the bytes are not valid UTF-8.
 
-<details>
-  <summary>Full UTF-8 validity rules</summary>
-
-For invalid input, the tests in this stage only use cut-off characters and bytes
-that never appear in UTF-8, so the rule above covers those cases. UTF-8 also
-limits the second byte after four lead bytes. These limits exclude encodings
-longer than necessary, Unicode's reserved surrogate range, and values above its
-maximum, U+10FFFF:
-
-| First byte | Length | Second byte |
-| ---------- | ------ | ----------- |
-| 224        | 3      | 160–191     |
-| 237        | 3      | 128–159     |
-| 240        | 4      | 144–191     |
-| 244        | 4      | 128–143     |
-
-A second byte outside its range doesn't fit. Replace the lead byte with `�`,
-then process that second byte again as the start of the next sequence. This
-follows the Unicode Standard's
-[maximal subpart rule](https://www.unicode.org/versions/Unicode16.0.0/core-spec/chapter-3/#G66453),
-which groups each longest valid prefix of an incomplete character into one
-replacement.
-
-</details>
+- This stage's invalid inputs are cut-off characters and bytes that never appear
+  in UTF-8. The Unicode Standard's
+  [maximal subpart rule](https://www.unicode.org/versions/Unicode16.0.0/core-spec/chapter-3/#G66453)
+  covers the rest, including overlong encodings, surrogate values, and values
+  above U+10FFFF.
 
 {{#lang_is_python}}
 

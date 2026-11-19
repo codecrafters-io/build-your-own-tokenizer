@@ -1,7 +1,5 @@
 Your `bytes` command gives each byte its own token. In this stage, you'll
 implement `top-pair` to find the most frequent neighboring pair of token IDs.
-This is how your tokenizer will choose which pair to combine when learning
-larger tokens.
 
 ### Why combine pairs?
 

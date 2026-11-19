@@ -1,7 +1,6 @@
 Your tokenizer can find a frequent pair and merge it. In this stage, you'll
 combine those operations in a `train` command that learns an ordered list of
-merges from a text file. Saving these rules lets the tokenizer reuse them to
-encode new text.
+merges from a text file.
 
 ### Your progress
 
@@ -43,7 +42,8 @@ BPE.
 ### The `train` command
 
 The `train` command reads text from a file and runs the loop as many times as
-`--num-merges` asks:
+`--num-merges` asks. Saving these rules lets the tokenizer reuse them to encode
+new text.
 
 1. Convert the text into UTF-8 bytes.
 2. Find the most frequent pair. On a tie, the pair that appears first, reading
