@@ -1,17 +1,24 @@
 In this stage, you'll implement the `--pretokenize gpt2` option to split text
 into chunks before merging, the way GPT-2 does.
 
-<details>
-  <summary>Your progress: 11 → 13 tokens for the example sentence `to the top of the tree`</summary>
+### Your progress
 
-Here's how many tokens the sentence `to the top of the tree` takes so far:
+<details>
+  <summary>11 → 13 tokens for the example sentence `to the top of the tree`</summary>
+
+Here's how many tokens the sentence takes so far:
 
 ```text
 bytes     ██████████████████████  22 tokens
-train     ███████████             11 tokens
+encode    ███████████             11 tokens
 split     █████████████           13 tokens   ← this stage
 GPT-2     ██████                   6 tokens   ← the goal
 ```
+
+The count rises here because a merge cannot cross a chunk boundary. The five
+merges from the previous stages were learned without splitting, so some of them
+joined text that now falls on opposite sides of a boundary. GPT-2 learned its
+merges on split text, so its merges only ever work within a chunk.
 
 </details>
 
@@ -20,9 +27,12 @@ GPT-2     ██████                   6 tokens   ← the goal
 The
 [GPT-2 paper](https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf)
 found plain BPE spending merges on `dog.`, `dog!`, and `dog?`, one token for
-each variation. GPT-2 fixes this by splitting text into chunks first and keeping
-every merge inside a chunk. It encodes `dog. dog! dog?` as `dog`, `.`, ` dog`,
-`!`, ` dog`, and `?`, so ` dog` is one token, used twice.
+each variation. GPT-2 splits text into chunks before it merges, and no merge
+joins two chunks. It encodes `dog. dog! dog?` as `dog`, `.`, ` dog`, `!`,
+` dog`, and `?`, so ` dog` is one token, used twice.
+
+An encoder has to split the same way. Otherwise a merge can join pieces that
+GPT-2 kept apart, and the token IDs no longer match.
 
 ### Splitting with GPT-2's pattern
 
@@ -33,10 +43,36 @@ GPT-2 splits with this pattern, from
 '(?:[sdmt]|ll|ve|re)| ?\p{L}++| ?\p{N}++| ?[^\s\p{L}\p{N}]++|\s++$|\s+(?!\S)|\s
 ```
 
-Split the text with this pattern, encode each chunk with the merges from
-`--merges`, and concatenate the ids. For example, the text `Hello world's 123!!`
-splits into `Hello`, ` world`, `'s`, ` 123`, and `!!`, which are exactly GPT-2's
-five tokens for it. With merges `[[108, 108], [111, 32]]`, the ids are:
+The `|` characters separate seven alternatives, and the first one that matches
+at a position wins:
+
+- `'(?:[sdmt]|ll|ve|re)` matches an apostrophe followed by `s`, `d`, `m`, `t`,
+  `ll`, `ve`, or `re`, the endings of contractions.
+- ` ?\p{L}++` matches a run of Unicode letters. The ` ?` lets one ASCII space
+  join the run.
+- ` ?\p{N}++` does the same for a run of Unicode digits.
+- ` ?[^\s\p{L}\p{N}]++` matches a run of anything else that is not whitespace,
+  again with one optional space in front.
+- `\s++$` matches whitespace at the end of the text. `\s+(?!\S)` matches
+  whitespace followed by more whitespace, so a run can stop one space before the
+  next chunk. `\s` matches a single whitespace character on its own.
+
+Whitespace that no earlier alternative claimed becomes its own chunk.
+`foo   bar` splits into `foo`, `"  "`, and `" bar"`, so the two spaces in the
+middle stay together and the last space joins `bar`.
+
+Each match of the pattern is one chunk. Encode each chunk with the merges from
+`--merges`, and concatenate the ids in chunk order. A merge applies only inside
+a chunk, so two ids from different chunks never combine.
+
+For example, the text `Hello world's 123!!` splits into five chunks:
+
+```text
+"Hello"  " world"  "'s"  " 123"  "!!"
+```
+
+GPT-2's vocabulary holds a single token for each of these chunks. With merges
+`[[108, 108], [111, 32]]`, the ids are:
 
 ```json
 [
@@ -69,7 +105,7 @@ The tester will write `Hello world's 123!!` to `text.txt` and
 $ ./your_program.sh encode text.txt --merges merges.json --pretokenize gpt2
 ```
 
-Your program must print the token ids as a JSON array:
+Your program must print the token IDs as a JSON array:
 
 ```json
 [
