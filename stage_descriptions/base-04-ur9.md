@@ -1,10 +1,13 @@
-In this stage, you'll implement the `train` command to learn which pairs to
-merge from a text file.
+Your `top-pair` and `merge` commands each do one step by hand. In this stage,
+you'll implement the `train` command to repeat both and learn merges from a text
+file.
+
+### Your progress
 
 <details>
-  <summary>Your progress: 22 → 11 tokens for the example sentence `to the top of the tree`</summary>
+  <summary>22 → 11 tokens for the example sentence `to the top of the tree`</summary>
 
-Here's how many tokens the sentence `to the top of the tree` takes so far:
+Here's how many tokens the sentence takes after five merges learned from it:
 
 ```text
 bytes     ██████████████████████  22 tokens
@@ -47,11 +50,14 @@ The `train` command reads text from a file and runs the loop as many times as
 
 For example, here's `aaabdaaabac` with `--merges 3`:
 
-| Round | Ids                                             | Most frequent pair                          | New id |
-| ----- | ----------------------------------------------- | ------------------------------------------- | ------ |
-| 1     | `[97, 97, 97, 98, 100, 97, 97, 97, 98, 97, 99]` | `(97, 97)`, 4 times                         | 256    |
-| 2     | `[256, 97, 98, 100, 256, 97, 98, 97, 99]`       | `(256, 97)`, tied with `(97, 98)` and first | 257    |
-| 3     | `[257, 98, 100, 257, 98, 97, 99]`               | `(257, 98)`, 2 times                        | 258    |
+| Round | Ids                                             | Most frequent pair                            | New id |
+| ----- | ----------------------------------------------- | --------------------------------------------- | ------ |
+| 1     | `[97, 97, 97, 98, 100, 97, 97, 97, 98, 97, 99]` | `(97, 97)`, 4 times                           | 256    |
+| 2     | `[256, 97, 98, 100, 256, 97, 98, 97, 99]`       | `(256, 97)` and `(97, 98)`, 2 times each, tie | 257    |
+| 3     | `[257, 98, 100, 257, 98, 97, 99]`               | `(257, 98)`, 2 times                          | 258    |
+
+`(256, 97)` and `(97, 98)` both appear twice in round 2, and `(256, 97)` comes
+first, so it wins the tie.
 
 The command prints the merged pairs in order:
 
@@ -62,6 +68,9 @@ The command prints the merged pairs in order:
   [257, 98]
 ]
 ```
+
+The tester parses your output as JSON, so spacing and line breaks are up to you.
+`[[97,97],[256,97],[257,98]]` on one line passes too.
 
 ### Tests
 

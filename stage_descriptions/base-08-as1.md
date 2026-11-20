@@ -1,10 +1,12 @@
 In this stage, you'll implement the `--vocab` option to produce GPT-2's exact
-token ids from its vocabulary files.
+token IDs from its vocabulary files.
+
+### Your progress
 
 <details>
-  <summary>Your progress: 6 tokens for the example sentence `to the top of the tree`</summary>
+  <summary>6 tokens for the example sentence `to the top of the tree`</summary>
 
-Here's how many tokens the sentence `to the top of the tree` takes so far:
+Here's how many tokens the sentence takes at each step:
 
 ```text
 bytes     ██████████████████████  22 tokens
@@ -85,7 +87,7 @@ The tester will write `Hello world` to `text.txt`, put GPT-2's `vocab.json` and
 $ ./your_program.sh encode text.txt --vocab gpt2
 ```
 
-Your program must print the token ids as a JSON array:
+Your program must print the token IDs as a JSON array:
 
 ```json
 [15496, 995]

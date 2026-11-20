@@ -1,10 +1,12 @@
-In this stage, you'll implement the `decode` command to turn token ids back into
-text.
+Your `encode` command turns text into token IDs. In this stage, you'll implement
+the `decode` command to turn those ids back into text.
+
+### Your progress
 
 <details>
-  <summary>Your progress: back to the original text for the example sentence `to the top of the tree`</summary>
+  <summary>Back to the original text for the example sentence `to the top of the tree`</summary>
 
-Here's how many tokens the sentence `to the top of the tree` takes so far:
+Here's how many tokens the sentence takes, and what decoding gives back:
 
 ```text
 bytes     ██████████████████████  22 tokens
@@ -17,14 +19,14 @@ GPT-2     ██████                   6 tokens   ← the goal
 
 ### Why decode?
 
-A language model writes its answer as token ids. Decode turns those ids back
+A language model writes its answer as token IDs. Decode turns those ids back
 into text.
 
-👋 is four UTF-8 bytes. GPT-2 splits them across two tokens, `[41840, 233]`.
-The first token holds the first three bytes. The second holds the last byte.
-UTF-8 needs all four bytes to make 👋, so decoding the first token by itself
-gives the replacement character `�`. Join the bytes from both tokens first, and
-the result is 👋.
+👋 is four UTF-8 bytes. GPT-2 splits them across two tokens, `[41840, 233]`. The
+first token holds the first three bytes. The second holds the last byte. UTF-8
+needs all four bytes to make 👋, so decoding the first token by itself gives the
+replacement character `�`. Join the bytes from both tokens first, and the result
+is 👋.
 
 Your decoder does the same with any text. Complete characters come back as
 themselves. Bytes that stop halfway through a character come back as `�`.
