@@ -1,13 +1,31 @@
-In this stage, you'll implement the `top-pair` command to find the pair of
-tokens a tokenizer should combine next.
+Your `bytes` command gives every byte a token of its own. In this stage, you'll
+implement the `top-pair` command, which finds the pair of neighboring token IDs
+a tokenizer should combine next.
+
+### Your progress
+
+<details>
+  <summary>Still 22 tokens for the example sentence `to the top of the tree`</summary>
+
+Here's how many tokens the sentence `to the top of the tree` takes so far:
+
+```text
+bytes     ██████████████████████  22 tokens
+top-pair  ██████████████████████  22 tokens   ← this stage picks a pair, so the count holds
+GPT-2     ██████                   6 tokens   ← the goal
+```
+
+</details>
 
 ### Why combine pairs?
 
-GPT-2 sees `Hello world` as 2 tokens, `Hello` and ` world`. Your `bytes` command
-sees it as 11 bytes. A tokenizer gets from 11 down to 2 by repeatedly combining
-the most common pair of tokens into a new token.
+GPT-2 encodes `Hello world` as 2 tokens, `Hello` and `world` with the space
+before it. Your `bytes` command produces 11 tokens for the same text.
 
-This stage finds the most common pair. Later stages combine it and repeat.
+A tokenizer gets from 11 down to 2 by repeatedly combining the most common pair
+of neighboring tokens into a new token. Each merge replaces two neighboring IDs
+with one, so a pair that appears often saves many tokens across a text. This
+stage finds the most frequent pair. Later stages combine it and repeat.
 
 ### The `top-pair` command
 

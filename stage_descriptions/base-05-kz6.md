@@ -1,10 +1,13 @@
-In this stage, you'll implement the `encode` command to turn new text into token
-ids with a list of learned merges.
+Your `train` command learns merges from one text. In this stage, you'll
+implement the `encode` command to apply a learned list of merges to new text.
+
+### Your progress
 
 <details>
-  <summary>Your progress: 11 tokens for the example sentence `to the top of the tree`</summary>
+  <summary>Still 11 tokens for the example sentence `to the top of the tree`</summary>
 
-Here's how many tokens the sentence `to the top of the tree` takes so far:
+Here's how many tokens the sentence takes when encoded with its five learned
+merges:
 
 ```text
 bytes     ██████████████████████  22 tokens
@@ -77,7 +80,7 @@ like this:
 $ ./your_program.sh encode text.txt --merges merges.json
 ```
 
-Your program must print the token ids as a JSON array:
+Your program must print the token IDs as a JSON array:
 
 ```json
 [258]
