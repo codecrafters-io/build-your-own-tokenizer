@@ -20,11 +20,17 @@ completion_percentage: 5
 
 languages:
   - slug: "python"
+    alpha_tester_usernames: ["YuTaicheng"]
   - slug: "rust"
+    alpha_tester_usernames: ["YuTaicheng"]
   - slug: "go"
+    alpha_tester_usernames: ["YuTaicheng"]
   - slug: "cpp"
+    alpha_tester_usernames: ["YuTaicheng"]
   - slug: "typescript"
+    alpha_tester_usernames: ["YuTaicheng"]
   - slug: "java"
+    alpha_tester_usernames: ["YuTaicheng"]
 
 marketing:
   difficulty: medium
